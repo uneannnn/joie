@@ -1,0 +1,49 @@
+rules_version = '2';
+
+// Joie: only phones that joined a trip with its code can read or change it.
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function signedIn() {
+      return request.auth != null;
+    }
+
+    function tripCode(tripId) {
+      return get(/databases/$(database)/documents/trips/$(tripId)).data.code;
+    }
+
+    function isMember(tripId) {
+      return signedIn() &&
+        exists(/databases/$(database)/documents/trips/$(tripId)/joiners/$(request.auth.uid));
+    }
+
+    // Code -> trip lookup. Anyone signed in can look up a code they were given.
+    match /codes/{code} {
+      allow get: if signedIn();
+      allow create: if isMember(request.resource.data.tripId)
+                    && tripCode(request.resource.data.tripId) == code;
+    }
+
+    match /trips/{tripId} {
+      allow create: if signedIn() && request.resource.data.ownerUid == request.auth.uid;
+      allow read: if isMember(tripId);
+      allow update: if isMember(tripId)
+                    && request.resource.data.code == resource.data.code
+                    && request.resource.data.ownerUid == resource.data.ownerUid;
+      allow delete: if isMember(tripId) && resource.data.ownerUid == request.auth.uid;
+
+      // Joining: a phone adds itself by proving it knows the trip code.
+      match /joiners/{uid} {
+        allow create, update: if signedIn() && uid == request.auth.uid
+                              && request.resource.data.code == tripCode(tripId);
+        allow read: if isMember(tripId);
+        allow delete: if signedIn() && uid == request.auth.uid;
+      }
+
+      // Expenses, payments, receipts, avatars: members only.
+      match /{collection}/{docId} {
+        allow read, write: if collection != 'joiners' && isMember(tripId);
+      }
+    }
+  }
+}

@@ -1,0 +1,824 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Joie</title>
+<meta name="description" content="Split trip costs with friends. Join with a 6-letter code.">
+<meta name="theme-color" content="#8ea4cf">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Joie">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Young+Serif&family=IBM+Plex+Sans+Thai:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+*,*::before,*::after{box-sizing:border-box}
+:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+body{margin:0;font-size:14px;-webkit-tap-highlight-color:transparent}
+img{max-width:100%}
+[hidden]{display:none!important}
+</style>
+<style>
+/* Layout: one mobile column — summary strip, tabs, ledger list; add-expense sheet slides up from a sticky bottom bar */
+:root{
+  /* Palette from a Shenzhen Bay picnic at dusk: blue-hour sky, peach horizon, lawn green, picnic-blanket cream */
+  --bg:#eef1f6; --surface:#fdfbf7; --ink:#1f2b2e; --muted:#5f6b74; --line:#dde2ea;
+  --accent:#4a7a2a; --accent-ink:#ffffff; --accent-soft:#e3eed6;
+  --warm:#e07a4f; --warm-soft:#fde6d8; --owe:#c4513a; --get:#4a7a2a;
+  --sky:linear-gradient(180deg,#8ea4cf 0%,#b9bfdc 45%,#f3c6a5 80%,#f4a77f 100%);
+  --dusk:linear-gradient(100deg,#6f88bd 0%,#a9a6cf 45%,#f09a6e 100%);
+  --display:"Young Serif","IBM Plex Sans Thai",Georgia,serif;
+  --body:"IBM Plex Sans Thai",system-ui,-apple-system,sans-serif;
+  --mono:"IBM Plex Mono",ui-monospace,Menlo,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#131a27; --surface:#1c2433; --ink:#eef1f6; --muted:#9aa6b8; --line:#2c3547;
+  --accent:#9cc36a; --accent-ink:#13200a; --accent-soft:#283a22;
+  --warm:#f4a37a; --warm-soft:#3d2a24; --owe:#f2876f; --get:#9cc36a;
+  --dusk:linear-gradient(100deg,#9fb3dc 0%,#c7b9dc 45%,#f6ad85 100%); color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#131a27; --surface:#1c2433; --ink:#eef1f6; --muted:#9aa6b8; --line:#2c3547;
+  --accent:#9cc36a; --accent-ink:#13200a; --accent-soft:#283a22;
+  --warm:#f4a37a; --warm-soft:#3d2a24; --owe:#f2876f; --get:#9cc36a;
+  --dusk:linear-gradient(100deg,#9fb3dc 0%,#c7b9dc 45%,#f6ad85 100%); color-scheme:dark}
+body{background:var(--bg);color:var(--ink);font-family:var(--body);font-size:15px;line-height:1.5}
+.wrap{max-width:640px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:20px 120px;display:flex;flex-direction:column;gap:18px}
+h1{font-family:var(--display);font-weight:800;font-size:clamp(26px,7vw,34px);line-height:1.05;margin:0;text-wrap:balance;letter-spacing:-.01em}
+.eyebrow{font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:600}
+.num{font-family:var(--mono);font-variant-numeric:tabular-nums}
+header{display:flex;flex-direction:column;gap:6px}
+.route{display:flex;align-items:center;gap:8px;color:var(--muted);font-size:13px}
+.route i{flex:1;height:0;border-top:1.5px dashed var(--line);max-width:60px}
+.status{font-size:12px;color:var(--muted)}
+.status b{color:var(--warm);font-weight:600}
+
+.summary{display:grid;grid-template-columns:1fr 1fr;gap:1px;background:var(--line);border:1px solid var(--line);border-radius:14px;overflow:hidden}
+.summary div{background:var(--surface);padding:12px 14px;display:flex;flex-direction:column;gap:2px;min-width:0}
+.summary .big{font-size:22px;font-weight:500}
+.summary small{color:var(--muted);font-size:12px}
+
+.tabs{display:flex;gap:4px;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:4px;overflow-x:auto;scrollbar-width:none}
+.tabs::-webkit-scrollbar{display:none}
+.tabs button{flex:1 0 auto;white-space:nowrap;border:0;background:transparent;color:var(--muted);font:600 14px var(--body);padding:9px 6px;border-radius:9px;cursor:pointer}
+.tabs button[aria-selected="true"]{background:var(--accent-soft);color:var(--ink)}
+button:focus-visible,input:focus-visible,select:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+
+.list{display:flex;flex-direction:column;background:var(--surface);border:1px solid var(--line);border-radius:14px}
+.day{padding:10px 14px 4px;font-size:12px;color:var(--muted);font-weight:600;letter-spacing:.04em;text-transform:uppercase}
+.row{display:grid;grid-template-columns:36px 1fr auto;gap:10px;align-items:center;padding:10px 14px;border-top:1px solid var(--line)}
+.day+.row{border-top:0}
+.cat{width:36px;height:36px;border-radius:10px;background:var(--warm-soft);color:var(--warm);display:grid;place-items:center;font-size:11px;font-weight:600;letter-spacing:.02em}
+.row .t{min-width:0}
+.row .t b{display:block;font-weight:600;overflow-wrap:anywhere}
+.row .t span{font-size:12px;color:var(--muted)}
+.row .amt{text-align:right;display:flex;flex-direction:column;align-items:flex-end;gap:2px}
+.row .amt small{font-size:11px;color:var(--muted)}
+.row .acts{grid-column:2/4;display:flex;gap:8px;justify-content:flex-end}
+.link{border:0;background:none;color:var(--muted);font:500 12px var(--body);padding:4px 2px;cursor:pointer;text-decoration:underline;text-underline-offset:2px}
+.link.danger{color:var(--owe)}
+
+.empty{padding:28px 18px;text-align:center;color:var(--muted);display:flex;flex-direction:column;gap:10px;align-items:center}
+.empty b{color:var(--ink);font-family:var(--display);font-size:18px}
+
+.people{display:flex;flex-direction:column}
+.person{display:grid;grid-template-columns:1fr auto;gap:4px 12px;padding:12px 14px;border-top:1px solid var(--line)}
+.person:first-child{border-top:0}
+.person .n{font-weight:600}
+.person .bal{font-weight:500}
+.person .sub{grid-column:1/3;font-size:12px;color:var(--muted)}
+.pos{color:var(--get)} .neg{color:var(--owe)}
+#balances{display:flex;flex-direction:column;gap:12px}
+.settle-hero .top{display:flex;justify-content:space-between;align-items:center;gap:12px}
+.settle-hero .top>div{display:flex;flex-direction:column;gap:4px;min-width:0}
+.ring{--p:0;width:58px;height:58px;border-radius:50%;flex:none;display:grid;place-items:center;background:conic-gradient(var(--accent) calc(var(--p)*1%),var(--line) 0)}
+.ring span{width:44px;height:44px;border-radius:50%;background:var(--surface);display:grid;place-items:center;font-size:13px;font-weight:500}
+.prog{height:8px;border-radius:4px;background:var(--line);overflow:hidden}
+.prog i{display:block;height:100%;background:var(--accent);border-radius:4px}
+.settle-list{display:flex;flex-direction:column;gap:10px}
+.scard{background:var(--surface);border:1px solid var(--line);border-radius:14px;overflow:hidden}
+.scard header{display:grid;grid-template-columns:auto 1fr auto;gap:10px;align-items:center;padding:12px 14px}
+.scard header .av{width:40px;height:40px;font-size:15px}
+.scard .who{display:flex;flex-direction:column;min-width:0}
+.scard .who b{font-size:16px;overflow-wrap:anywhere}
+.scard .who span{font-size:12px;color:var(--muted)}
+.pill{font:600 13px var(--body);padding:5px 10px;border-radius:999px;white-space:nowrap;font-variant-numeric:tabular-nums}
+.pill.owe{background:color-mix(in srgb,var(--owe) 14%,transparent);color:var(--owe)}
+.pill.get{background:var(--accent-soft);color:var(--get)}
+.pill.done{background:var(--line);color:var(--muted)}
+.scard.done header{opacity:.75}
+.lines{display:flex;flex-direction:column;border-top:1px dashed var(--line);background:color-mix(in srgb,var(--bg) 55%,var(--surface))}
+.line{display:grid;grid-template-columns:48px auto 1fr auto 88px;gap:8px;align-items:center;padding:8px 14px;font-size:14px}
+.line+.line{border-top:1px solid var(--line)}
+.line .dir{font-size:11px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+.line .nm{min-width:0;overflow-wrap:anywhere}
+.line .nm small{color:var(--muted);font-size:12px;margin-left:4px}
+.line .amt{text-align:right;font-weight:500}
+.line .btn.small,.line .link,.line .wait{justify-self:end}
+.line .wait{font-size:12px;color:var(--muted)}
+.line.done{color:var(--muted)}
+.line.done .dir{color:var(--get)}
+.line.done .amt{text-decoration:line-through;text-decoration-color:color-mix(in srgb,var(--muted) 60%,transparent)}
+@media (max-width:380px){.line{grid-template-columns:auto 1fr auto;}.line .dir{grid-column:1/4}.line>.btn,.line>.link,.line>.wait{grid-column:1/4}}
+
+.av{width:28px;height:28px;border-radius:50%;object-fit:cover;background:var(--accent-soft);color:var(--accent);display:inline-grid;place-items:center;font:600 12px var(--body);flex:none;vertical-align:middle}
+.avpick{position:relative;cursor:pointer;flex:none;display:block}
+.avpick .av{width:44px;height:44px;font-size:15px}
+.avpick::after{content:"+";position:absolute;right:-2px;bottom:-2px;width:18px;height:18px;border-radius:50%;background:var(--accent);color:var(--accent-ink);font:700 13px/18px var(--body);text-align:center;border:2px solid var(--surface)}
+.avpick:focus-within{outline:2px solid var(--accent);outline-offset:2px;border-radius:50%}
+.vh{position:absolute;width:1px;height:1px;opacity:0;overflow:hidden;pointer-events:none}
+.transfer .who{display:flex;align-items:center;gap:6px;flex-wrap:wrap;min-width:0}
+.amt-col{display:flex;flex-direction:column;align-items:flex-end;gap:6px}
+.btn.small{padding:6px 12px;font-size:13px;border-radius:9px}
+.transfer.done .who{color:var(--muted)}
+.transfer .when{flex-basis:100%;font-size:12px;color:var(--muted)}
+.check{color:var(--get);font-weight:700}
+.hero{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:16px;display:flex;flex-direction:column;gap:10px}
+.hero .big{font-family:var(--mono);font-size:32px;font-weight:500;line-height:1.1}
+.stack{display:flex;height:10px;border-radius:5px;overflow:hidden;background:var(--line)}
+.stack i{display:block;height:100%}
+.stack .s{background:var(--accent)} .stack .p{background:var(--warm)}
+.legend{display:flex;flex-wrap:wrap;gap:6px 16px;font-size:13px;color:var(--muted)}
+.legend span{display:inline-flex;align-items:center;gap:6px}
+.legend i{width:10px;height:10px;border-radius:3px;display:inline-block}
+.kv{display:grid;grid-template-columns:1fr auto;gap:6px 12px;padding:10px 14px;border-top:1px solid var(--line);align-items:center}
+.kv:first-child{border-top:0}
+.kv .bar{grid-column:1/3}
+.tag{font-size:11px;font-weight:600;color:var(--warm);background:var(--warm-soft);padding:1px 7px;border-radius:999px;margin-left:6px;vertical-align:1px}
+.pcard{display:flex;flex-direction:column;gap:8px;padding:14px;border-top:1px solid var(--line)}
+.pcard:first-child{border-top:0}
+.pcard .top{display:flex;justify-content:space-between;gap:12px;align-items:baseline}
+.pcard .top b{font-size:16px}
+.pcard .grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;font-size:12px;color:var(--muted)}
+.pcard .grid span{display:flex;flex-direction:column;min-width:0}
+.pcard .grid .num{color:var(--ink);font-size:14px}
+.bar{grid-column:1/3;height:5px;background:var(--line);border-radius:3px;overflow:hidden}
+.bar i{display:block;height:100%;background:var(--accent)}
+.transfer{display:grid;grid-template-columns:1fr auto;gap:8px;padding:12px 14px;border-top:1px solid var(--line);align-items:center}
+.transfer:first-child{border-top:0}
+.transfer .who{min-width:0}
+.transfer .arrow{color:var(--muted);margin:0 4px}
+h2{font-family:var(--display);font-weight:600;font-size:18px;margin:6px 0 0}
+.hint{font-size:12px;color:var(--muted);margin:0}
+
+.card{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:14px;display:flex;flex-direction:column;gap:12px}
+label{display:flex;flex-direction:column;gap:5px;font-size:13px;font-weight:600;color:var(--muted)}
+input,select{font:16px var(--body);color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:10px 12px;width:100%;box-sizing:border-box;min-width:0}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.two>*{min-width:0}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{border:1px solid var(--line);background:var(--bg);color:var(--ink);font:500 14px var(--body);padding:7px 12px;border-radius:999px;cursor:pointer}
+.chip[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.btn{border:0;background:var(--accent);color:var(--accent-ink);font:600 15px var(--body);padding:12px 16px;border-radius:12px;cursor:pointer}
+.btn.ghost{background:transparent;color:var(--ink);border:1px solid var(--line)}
+.btn:disabled{opacity:.5;cursor:not-allowed}
+.member{display:flex;gap:8px;align-items:center}
+.member input{flex:1}
+.err{color:var(--owe);font-size:13px;margin:0}
+
+.dock{position:fixed;left:0;right:0;bottom:0;background:linear-gradient(transparent,var(--bg) 35%);padding:24px max(16px,env(safe-area-inset-right,0px)) calc(14px + env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px));display:flex;justify-content:center;z-index:5}
+.dock .btn{width:100%;max-width:640px;font-size:16px;padding:14px;box-shadow:0 6px 20px rgba(13,60,48,.18)}
+
+.sheet{position:fixed;inset:0;z-index:20;background:rgba(10,25,22,.45);display:flex;align-items:flex-end;justify-content:center}
+.sheet .panel{background:var(--surface);width:100%;max-width:640px;max-height:92%;overflow:auto;border-radius:18px 18px 0 0;padding:18px max(16px,env(safe-area-inset-right,0px)) calc(18px + env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px));box-sizing:border-box;display:flex;flex-direction:column;gap:12px}
+.sheet h2{margin:0}
+.sheet .foot{display:flex;gap:10px}
+.sheet .foot .btn{flex:1}
+.preview{font-size:13px;color:var(--muted)}
+@media (prefers-reduced-motion:no-preference){.sheet .panel{animation:up .22s ease-out}@keyframes up{from{transform:translateY(30px);opacity:.6}}}
+
+h1{background:var(--dusk);-webkit-background-clip:text;background-clip:text;color:transparent;font-weight:400;letter-spacing:0}
+h2{font-weight:400}
+.eyebrow{color:var(--warm)}
+header{position:relative;padding:18px 16px 16px;border-radius:18px;background:var(--sky);overflow:hidden}
+header::after{content:"";position:absolute;left:0;right:0;bottom:0;height:10px;background:var(--accent);opacity:.9}
+header h1{background:none;color:#fffaf3;text-shadow:0 1px 12px rgba(60,50,90,.25)}
+header .eyebrow{color:#fffaf3;opacity:.9}
+header .route{color:#fffaf3}
+header .route i{border-top-color:rgba(255,250,243,.7)}
+header .status{color:#2a2f45;background:rgba(255,250,243,.7);padding:3px 10px;border-radius:999px;align-self:flex-start;margin-bottom:6px}
+header .status b{color:#a5432a}
+.btn{background:var(--accent);color:var(--accent-ink)}
+.btn.ghost{background:transparent;color:var(--ink);border:1px solid var(--line)}
+.dock .btn{box-shadow:0 8px 22px rgba(74,122,42,.28)}
+.hero{border-color:var(--line);background:var(--surface);border-top:4px solid transparent;background-image:linear-gradient(var(--surface),var(--surface)),var(--dusk);background-origin:border-box;background-clip:padding-box,border-box}
+.hero .big.neg{color:var(--owe)}
+.tabs button[aria-selected="true"]{background:var(--accent);color:var(--accent-ink)}
+.chip[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.cat{background:var(--warm-soft);color:var(--warm)}
+.pill.owe{background:var(--warm-soft);color:var(--owe)}
+.pill.get{background:var(--accent-soft);color:var(--get)}
+.stack .s,.bar i,.prog i{background:var(--accent)}
+.stack .p{background:var(--warm)}
+.ring{background:conic-gradient(var(--accent) calc(var(--p)*1%),var(--line) 0)}
+.sheet{background:rgba(31,43,46,.45)}
+.sheet .panel{border-top:4px solid var(--warm)}
+
+.rcpt{display:grid;grid-template-columns:64px 1fr;gap:12px;align-items:center;padding:12px;border:1.5px dashed var(--line);border-radius:14px;background:var(--bg);cursor:pointer}
+.rcpt:hover,.rcpt:focus-within{border-color:var(--accent)}
+.rcpt .thumb{width:64px;height:64px;border-radius:10px;background:var(--accent-soft);color:var(--accent);display:grid;place-items:center;overflow:hidden;font:600 11px var(--body);letter-spacing:.04em;text-transform:uppercase}
+.rcpt .thumb img{width:100%;height:100%;object-fit:cover}
+.rcpt .txt{display:flex;flex-direction:column;gap:2px;min-width:0}
+.rcpt .txt b{font-size:15px;color:var(--ink)}
+.rcpt .txt span{font-size:12px;color:var(--muted);font-weight:400}
+.rcpt-status{font-size:13px;color:var(--muted);margin:-4px 0 0;display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.rcpt-status.ok{color:var(--get)} .rcpt-status.warn{color:var(--owe)}
+.spin{width:14px;height:14px;border-radius:50%;border:2px solid var(--line);border-top-color:var(--accent);display:inline-block}
+@media (prefers-reduced-motion:no-preference){.spin{animation:sp .8s linear infinite}@keyframes sp{to{transform:rotate(360deg)}}}
+.payer-chips .chip{display:inline-flex;align-items:center;gap:6px;padding:4px 12px 4px 4px}
+.payer-chips .chip .av{width:24px;height:24px;font-size:11px}
+.row .t .by{display:inline-flex;align-items:center;gap:5px}
+.row .t .by .av{width:18px;height:18px;font-size:10px}
+.row .t .by b{display:inline;font-weight:600;color:var(--ink)}
+.viewer{position:fixed;inset:0;z-index:30;background:rgba(10,14,20,.85);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;padding:calc(16px + env(safe-area-inset-top,0px)) max(16px,env(safe-area-inset-right,0px)) calc(16px + env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px))}
+.viewer img{max-width:100%;max-height:80vh;border-radius:10px;background:#fff}
+.viewer p{color:#fff;margin:0;font-size:14px}
+
+.pbox{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:12px 14px;display:flex;flex-direction:column;gap:6px;min-width:0}
+.pb-name{display:flex;align-items:center;gap:8px;min-width:0}
+.pb-name b{font-size:15px;overflow-wrap:anywhere}
+.pb-total{font-size:20px;font-weight:500}
+.pb-lines{display:flex;flex-direction:column;gap:3px;font-size:12px;color:var(--muted);border-top:1px solid var(--line);padding-top:6px}
+.pb-lines span{display:flex;align-items:center;gap:6px}
+.pb-lines b{margin-left:auto;color:var(--ink);font-weight:500;font-size:13px}
+.dot{width:8px;height:8px;border-radius:2px;display:inline-block}
+.dot.s{background:var(--accent)} .dot.p{background:var(--warm)}
+.scard header .cat{width:40px;height:40px}
+.settle-hero .btn{margin-top:4px}
+.line.one{grid-template-columns:1fr}
+.line.one .btn{justify-self:stretch}
+
+.etable{background:var(--surface);border:1px solid var(--line);border-radius:14px;overflow:hidden}
+.et-head,.et-row summary{display:grid;grid-template-columns:1fr auto 58px 16px;gap:10px;align-items:center;padding:10px 14px}
+.et-head{font-size:11px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);border-bottom:1px solid var(--line);grid-template-columns:1fr auto 84px}
+.et-head span:not(:first-child){text-align:right}
+.et-row+.et-row{border-top:1px solid var(--line)}
+.et-row summary{cursor:pointer;list-style:none}
+.et-row summary::-webkit-details-marker{display:none}
+.et-row summary:focus-visible{outline:2px solid var(--accent);outline-offset:-2px}
+.et-name{display:flex;flex-direction:column;min-width:0}
+.et-name b{overflow-wrap:anywhere}
+.et-name small{font-size:12px;color:var(--muted)}
+.et-amt{text-align:right;font-weight:500}
+.et-row .pill{justify-self:end;font-size:12px;padding:3px 8px}
+.chev{width:8px;height:8px;border-right:2px solid var(--muted);border-bottom:2px solid var(--muted);transform:rotate(45deg);justify-self:center;margin-top:-4px;transition:transform .15s}
+.et-row[open] .chev{transform:rotate(-135deg);margin-top:4px}
+.et-row[open] summary{background:var(--accent-soft)}
+.et-row .lines{border-top:1px dashed var(--line)}
+
+#mini{display:flex;flex-direction:column;gap:10px}
+.dash-pick{flex-direction:row!important;align-items:center;justify-content:space-between;gap:12px}
+.dash-pick select{width:auto;min-width:150px;font-weight:600}
+.pbox.dash .pb-total{font-size:26px}
+.dash-items{display:flex;flex-direction:column;border-top:1px solid var(--line);margin-top:2px}
+.di{display:grid;grid-template-columns:1fr auto;gap:10px;align-items:center;padding:8px 0}
+.di+.di{border-top:1px solid var(--line)}
+.di-t{display:flex;flex-direction:column;min-width:0}
+.di-t b{font-weight:600;overflow-wrap:anywhere}
+.di-t small{font-size:12px;color:var(--muted)}
+.di-p{color:var(--warm)}
+.chip.x2[aria-pressed="true"]{background:var(--warm);border-color:var(--warm);color:#fff}
+.chip b{font-weight:700}
+.topbar{display:flex;justify-content:space-between;align-items:center;gap:10px}
+.trips-btn{border:0;background:rgba(255,250,243,.75);color:#2a2f45;font:600 13px var(--body);padding:6px 12px;border-radius:999px;cursor:pointer}
+.welcome{display:flex;flex-direction:column;gap:16px}
+.welcome .hero-sky{background:var(--sky);border-radius:22px;padding:24px 20px;color:#fffaf3;display:flex;flex-direction:column;gap:8px}
+.welcome .hero-sky h1{background:none;color:#fffaf3;font-size:clamp(34px,10vw,46px)}
+.welcome .hero-sky p{margin:0;opacity:.92;max-width:34ch}
+.trip-item{display:flex;align-items:center;gap:12px;padding:12px 14px;border-top:1px solid var(--line);cursor:pointer;background:none;border-left:0;border-right:0;border-bottom:0;width:100%;text-align:left;font:inherit;color:var(--ink)}
+.trip-item:first-child{border-top:0}
+.trip-item .sun{width:38px;height:38px;border-radius:10px;background:var(--sky);flex:none}
+.trip-item b{display:block;font-size:15px}
+.trip-item small{color:var(--muted);font-family:var(--mono);font-size:12px}
+.codebox{background:var(--sky);border-radius:14px;padding:16px;color:#fffaf3;display:flex;flex-direction:column;gap:8px}
+.codebox .code{font:600 34px/1 var(--mono);letter-spacing:.18em}
+.codebox .row2{display:flex;gap:8px;flex-wrap:wrap}
+.codebox .btn{background:#fffaf3;color:#2a2f45;border:0}
+#code-in{font:600 22px var(--mono);letter-spacing:.2em;text-transform:uppercase;text-align:center}
+.install-tip{font-size:13px;color:var(--muted);background:var(--surface);border:1px dashed var(--line);border-radius:12px;padding:10px 12px}
+</style>
+</head>
+<body>
+
+<div class="wrap" id="welcome" hidden>
+  <div class="welcome">
+    <div class="hero-sky">
+      <span class="eyebrow" style="color:#fffaf3">Trip expenses, split fairly</span>
+      <h1>Joie</h1>
+      <p>Log who paid, scan receipts, and see who owes whom. Friends join with a 6-letter code. No sign-up.</p>
+    </div>
+    <p class="err" id="welcomeErr" hidden></p>
+    <section id="myTrips" hidden>
+      <h2>Your trips</h2>
+      <div class="list" id="tripList"></div>
+    </section>
+    <form class="card" id="joinForm" novalidate>
+      <h2 style="margin:0">Join a trip</h2>
+      <p class="hint">Ask the person who made the trip for its code. It’s in their People tab.</p>
+      <input id="code-in" maxlength="6" autocomplete="off" autocapitalize="characters" placeholder="ABC123" aria-label="Trip code">
+      <button class="btn" type="submit" id="joinBtn">Join trip</button>
+    </form>
+    <form class="card" id="newForm" novalidate>
+      <h2 style="margin:0">Start a new trip</h2>
+      <label>Trip name<input id="new-name" placeholder="e.g. Hong Kong &amp; Shenzhen" autocomplete="off"></label>
+      <label>Travellers<textarea id="new-people" rows="4" placeholder="One name per line&#10;Your name first" style="font:16px var(--body);color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:10px 12px;resize:vertical"></textarea></label>
+      <button class="btn" type="submit" id="newBtn">Create trip</button>
+    </form>
+    <p class="install-tip" id="installTip" hidden>To add Joie to your home screen on iPhone: tap the Share button in Safari, then <b>Add to Home Screen</b>.</p>
+  </div>
+</div>
+
+<div class="wrap" id="app" hidden>
+  <header>
+    <div class="topbar"><span class="eyebrow" id="tripMeta">Joie</span><button class="trips-btn" id="tripsBtn" type="button">Trips</button></div>
+    <h1 id="tripName">Loading…</h1>
+    <div class="status" id="status">Connecting…</div>
+  </header>
+
+  <section class="mini" id="mini" aria-label="Cost per person"></section>
+
+  <nav class="tabs" role="tablist">
+    <button role="tab" id="tab-ledger" aria-selected="true" data-tab="ledger">Expenses</button>
+    <button role="tab" id="tab-balances" aria-selected="false" data-tab="balances">Who owes</button>
+    <button role="tab" id="tab-setup" aria-selected="false" data-tab="setup">People</button>
+  </nav>
+
+  <section id="ledger"></section>
+  <section id="balances" hidden></section>
+  <section id="setup" hidden></section>
+</div>
+
+<div class="dock" id="dockWrap" hidden><button class="btn" id="addBtn">+ Add expense</button></div>
+
+<div class="sheet" id="sheet" hidden>
+  <form class="panel" id="form" novalidate>
+    <h2 id="formTitle">Add expense</h2>
+    <label class="rcpt" for="f-receipt">
+      <span class="thumb" id="rcptThumb">Receipt</span>
+      <span class="txt"><b id="rcptHead">Upload receipt</b><span id="rcptSub">Take a photo or pick one. Joie fills in the amount and date.</span></span>
+      <input type="file" id="f-receipt" accept="image/*" class="vh">
+    </label>
+    <p class="rcpt-status" id="rcptStatus" hidden></p>
+    <label>What for<input id="f-title" placeholder="e.g. Hotel Kimberley, dim sum, MTR" autocomplete="off"></label>
+    <div class="two">
+      <label>Amount<input id="f-amount" inputmode="decimal" placeholder="0.00" class="num"></label>
+      <label>Currency<select id="f-cur"><option>HKD</option><option>CNY</option><option>THB</option></select></label>
+    </div>
+    <div>
+      <label>Who paid</label>
+      <div class="chips payer-chips" id="f-payer-chips" style="margin-top:6px"></div>
+      <select id="f-payer" hidden></select>
+    </div>
+    <div class="two">
+      <label>Date<input id="f-date" type="date"></label>
+      <label>Category<select id="f-cat"></select></label>
+    </div>
+    <div>
+      <label>Type</label>
+      <div class="chips" style="margin-top:6px">
+        <button type="button" class="chip" id="k-shared" aria-pressed="true">Shared with group</button>
+        <button type="button" class="chip" id="k-personal" aria-pressed="false">Personal (just me)</button>
+      </div>
+    </div>
+    <div id="splitBox">
+      <label style="flex-direction:row;justify-content:space-between;align-items:center">Split between
+        <span><button type="button" class="link" id="splitAll">All</button> · <button type="button" class="link" id="splitNone">None</button></span>
+      </label>
+      <div class="chips" id="f-split" style="margin-top:6px"></div>
+      <p class="hint" style="margin-top:6px">Tap a name once to include them, again to count them twice (paying for 2 people), and a third time to remove them.</p>
+    </div>
+    <p class="preview num" id="preview"></p>
+    <p class="err" id="formErr" hidden></p>
+    <div class="foot">
+      <button type="button" class="btn ghost" id="cancel">Cancel</button>
+      <button type="submit" class="btn" id="save">Save</button>
+    </div>
+  </form>
+</div>
+
+<div class="viewer" id="viewer" hidden><p id="viewerCap"></p><img id="viewerImg" alt="Receipt"><button class="btn ghost" id="viewerClose" style="color:#fff;border-color:rgba(255,255,255,.5)">Close</button></div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-app.js";
+import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-auth.js";
+import { initializeFirestore, persistentLocalCache, persistentMultipleTabManager, doc, collection, setDoc, getDoc, deleteDoc, onSnapshot, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-firestore.js";
+import { firebaseConfig } from "./config.js";
+(function(){
+const CATS={hotel:"Hotel",food:"Food",transport:"Transport",tickets:"Tickets",shopping:"Shopping",other:"Other"};
+const CAT_SHORT={hotel:"HTL",food:"EAT",transport:"MTR",tickets:"TIX",shopping:"SHP",other:"ETC"};
+const DEFAULT_SETTINGS={members:[],rates:{THB:1,HKD:4.20,CNY:4.60}};
+let settings=structuredClone(DEFAULT_SETTINGS);
+let receiptData=null,receiptChanged=false,scanCtl=null;
+let expenses=[],payments=[],avatars={},lastTransfers=[],armedUndo=null,armedAll=false,bulkBusy=false;const openExp=new Set();
+let mode="connecting", canWrite=true, editingId=null, armedDelete=null;
+const $=id=>document.getElementById(id);
+const esc=s=>String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const fmt=(n,cur="THB")=>{const sym={THB:"฿",HKD:"HK$",CNY:"¥"}[cur]||"";return (n<0?"−":"")+sym+Math.abs(n).toLocaleString("en-US",{minimumFractionDigits:cur==="THB"&&Math.abs(n)>=1000?0:2,maximumFractionDigits:2})};
+const toTHB=e=>e.amount*(settings.rates[e.cur]||1);
+const uid=()=>Math.random().toString(36).slice(2,10);
+const wOf=(e,id)=>Number((e.weights||{})[id])>1?Number(e.weights[id]):1;
+function sharesOf(e){const ids=(e.split||[]).filter(id=>settings.members.some(m=>m.id===id));const tot=ids.reduce((a,id)=>a+wOf(e,id),0);const t=toTHB(e);const o={};ids.forEach(id=>o[id]=tot?t*wOf(e,id)/tot:0);return o}
+const isPersonal=e=>e.kind==="personal"||((e.split||[]).length===1&&e.split[0]===e.paidBy);
+const nameOf=id=>(settings.members.find(m=>m.id===id)||{}).name||"(removed)";
+const av=id=>avatars[id]?`<img class="av" src="${esc(avatars[id])}" alt="">`:`<span class="av" aria-hidden="true">${esc((nameOf(id).trim()[0]||"?").toUpperCase())}</span>`;
+function shrink(file){return new Promise((res,rej)=>{const url=URL.createObjectURL(file);const im=new Image();im.onload=()=>{const s=Math.min(im.width,im.height),c=document.createElement("canvas");c.width=c.height=160;c.getContext("2d").drawImage(im,(im.width-s)/2,(im.height-s)/2,s,s,0,0,160,160);URL.revokeObjectURL(url);res(c.toDataURL("image/jpeg",0.82))};im.onerror=()=>{URL.revokeObjectURL(url);rej(new Error("image"))};im.src=url})}
+
+/* ---------- storage: Firebase (Firestore + anonymous sign-in) ---------- */
+const fbApp=initializeApp(firebaseConfig);
+const auth=getAuth(fbApp);
+const fdb=initializeFirestore(fbApp,{localCache:persistentLocalCache({tabManager:persistentMultipleTabManager()})});
+let tripId=null,tripCode="",tripTitle="",unsubs=[];
+const C=name=>collection(fdb,"trips",tripId,name);
+const bg=p=>{p.catch(err);return Promise.resolve()}; // apply locally now, sync in the background
+const api={
+  async saveSettings(s){settings=s;render();return bg(setDoc(doc(fdb,"trips",tripId),{members:s.members,rates:{HKD:s.rates.HKD,CNY:s.rates.CNY}},{merge:true}))},
+  async putExpense(id,data){return bg(setDoc(doc(C("expenses"),id),data))},
+  async delExpense(id){bg(deleteDoc(doc(C("receipts"),id)));for(const p of payments.filter(p=>p.expenseId===id))bg(deleteDoc(doc(C("payments"),p.id)));return bg(deleteDoc(doc(C("expenses"),id)))},
+  async addPayment(d){return bg(setDoc(doc(C("payments"),uid()),d))},
+  async setPayment(id,d){return bg(setDoc(doc(C("payments"),id),d))},
+  async delPayment(id){return bg(deleteDoc(doc(C("payments"),id)))},
+  async setReceipt(id,img){return bg(img?setDoc(doc(C("receipts"),id),{img}):deleteDoc(doc(C("receipts"),id)))},
+  async getReceipt(id){const d=await getDoc(doc(C("receipts"),id));const img=d.exists()?d.data().img:null;return typeof img==="string"&&img.startsWith("data:image/")?img:null},
+  async setAvatar(mid,img){return bg(setDoc(doc(C("avatars"),mid),{img}))}
+};
+function setStatus(){
+  const s=$("status");
+  if(mode==="shared") s.innerHTML=navigator.onLine?"Shared live with everyone in this trip":"<b>Offline</b> · changes sync when you’re back online";
+  else s.textContent="Connecting…";
+}
+window.addEventListener("online",setStatus);window.addEventListener("offline",setStatus);
+
+/* ---------- trips on this phone ---------- */
+function myTrips(){try{return JSON.parse(localStorage.getItem("joie-trips")||"[]")}catch(e){return[]}}
+function saveTrips(t){try{localStorage.setItem("joie-trips",JSON.stringify(t))}catch(e){}}
+function rememberTrip(id,name,code){const t=myTrips().filter(x=>x.id!==id);t.unshift({id,name,code});saveTrips(t);try{localStorage.setItem("joie-current",id)}catch(e){}}
+function forgetTrip(id){saveTrips(myTrips().filter(x=>x.id!==id));try{if(localStorage.getItem("joie-current")===id)localStorage.removeItem("joie-current")}catch(e){}}
+const newCode=()=>Array.from({length:6},()=>"ABCDEFGHJKLMNPQRSTUVWXYZ23456789"[Math.floor(Math.random()*32)]).join("");
+function signedIn(){return new Promise(res=>{const u=auth.currentUser;if(u)return res(u);const off=onAuthStateChanged(auth,u=>{if(u){off();res(u)}})})}
+
+function showWelcome(msg){
+  closeTrip();
+  $("app").hidden=true;$("welcome").hidden=false;$("dockWrap").hidden=true;
+  const t=myTrips();
+  $("myTrips").hidden=!t.length;
+  $("tripList").innerHTML=t.map(x=>`<button class="trip-item" type="button" data-trip="${esc(x.id)}"><span class="sun" aria-hidden="true"></span><span><b>${esc(x.name)}</b><small>Code ${esc(x.code)}</small></span></button>`).join("");
+  $("tripList").querySelectorAll("[data-trip]").forEach(b=>b.onclick=()=>openTrip(b.dataset.trip));
+  $("welcomeErr").textContent=msg||"";$("welcomeErr").hidden=!msg;
+  const standalone=window.matchMedia("(display-mode: standalone)").matches||navigator.standalone;
+  $("installTip").hidden=!!standalone;
+  document.title="Joie";
+}
+function closeTrip(){unsubs.forEach(u=>u());unsubs=[];tripId=null}
+function openTrip(id){
+  closeTrip();
+  tripId=id;mode="connecting";settings=structuredClone(DEFAULT_SETTINGS);expenses=[];payments=[];avatars={};
+  try{localStorage.setItem("joie-current",id)}catch(e){}
+  $("welcome").hidden=true;$("app").hidden=false;$("dockWrap").hidden=false;
+  const ref=myTrips().find(x=>x.id===id);$("tripName").textContent=ref?.name||"Loading…";
+  setStatus();render();
+  const lost=()=>{forgetTrip(id);showWelcome("That trip isn’t available on this phone any more. Join again with its code.")};
+  unsubs.push(onSnapshot(doc(fdb,"trips",id),s=>{
+    if(!s.exists()){lost();return}
+    const d=s.data();tripCode=d.code||"";tripTitle=d.name||"Trip";
+    settings={...DEFAULT_SETTINGS,members:d.members||[],rates:{THB:1,HKD:d.rates?.HKD||4.2,CNY:d.rates?.CNY||4.6}};
+    mode="shared";rememberTrip(id,tripTitle,tripCode);
+    $("tripName").textContent=tripTitle;document.title=tripTitle+" · Joie";
+    setStatus();render();
+  },e=>{console.warn(e);if(e.code==="permission-denied")lost()}));
+  unsubs.push(onSnapshot(C("expenses"),q=>{expenses=q.docs.map(d=>({id:d.id,...d.data()}));render()},e=>console.warn(e)));
+  unsubs.push(onSnapshot(C("payments"),q=>{payments=q.docs.map(d=>({id:d.id,...d.data()}));render()},e=>console.warn(e)));
+  unsubs.push(onSnapshot(C("avatars"),q=>{avatars={};q.docs.forEach(d=>{const img=d.data().img;if(typeof img==="string"&&img.startsWith("data:image/"))avatars[d.id]=img});render()},e=>console.warn(e)));
+}
+async function createTrip(name,names){
+  const u=await signedIn();
+  let code=newCode();
+  for(let i=0;i<5;i++){const s=await getDoc(doc(fdb,"codes",code));if(!s.exists())break;code=newCode()}
+  const ref=doc(collection(fdb,"trips"));
+  await setDoc(ref,{name,code,ownerUid:u.uid,members:names.map(n=>({id:uid(),name:n})),rates:{HKD:4.2,CNY:4.6},createdAt:serverTimestamp()});
+  await setDoc(doc(fdb,"trips",ref.id,"joiners",u.uid),{code,joinedAt:serverTimestamp()});
+  await setDoc(doc(fdb,"codes",code),{tripId:ref.id});
+  rememberTrip(ref.id,name,code);openTrip(ref.id);
+}
+async function joinTrip(raw){
+  const code=String(raw).toUpperCase().replace(/[^A-Z0-9]/g,"");
+  if(code.length!==6)throw new Error("Enter the 6-letter code.");
+  const u=await signedIn();
+  const c=await getDoc(doc(fdb,"codes",code));
+  if(!c.exists())throw new Error("No trip has that code. Check it and try again.");
+  const id=c.data().tripId;
+  await setDoc(doc(fdb,"trips",id,"joiners",u.uid),{code,joinedAt:serverTimestamp()});
+  rememberTrip(id,"Trip",code);openTrip(id);
+}
+async function connect(){
+  showWelcome();$("welcome").hidden=true;
+  if(!firebaseConfig.apiKey||firebaseConfig.apiKey.startsWith("PASTE")){showWelcome("Setup isn’t finished: paste your Firebase settings into config.js (see README).");return}
+  try{await signInAnonymously(auth)}catch(e){showWelcome("Couldn’t connect. Check your internet and reload.");return}
+  let cur=null;try{cur=localStorage.getItem("joie-current")}catch(e){}
+  if(cur&&myTrips().some(x=>x.id===cur))openTrip(cur);else showWelcome();
+}
+
+/* ---------- maths ---------- */
+function balances(){
+  const b={};settings.members.forEach(m=>b[m.id]={paid:0,share:0,sent:0,recv:0});
+  for(const e of expenses){
+    const thb=toTHB(e);const split=(e.split||[]).filter(id=>b[id]);
+    if(b[e.paidBy])b[e.paidBy].paid+=thb;
+    if(split.length){const sh=sharesOf(e);for(const id in sh)if(b[id])b[id].share+=sh[id]}
+  }
+  for(const p of payments){if(b[p.from])b[p.from].sent+=p.amt;if(b[p.to])b[p.to].recv+=p.amt}
+  return b;
+}
+function settle(b){
+  const cred=[],debt=[];
+  for(const [id,v] of Object.entries(b)){const n=Math.round((v.paid-v.share+v.sent-v.recv)*100)/100;if(n>0.5)cred.push({id,n});else if(n<-0.5)debt.push({id,n:-n})}
+  cred.sort((a,b)=>b.n-a.n);debt.sort((a,b)=>b.n-a.n);
+  const out=[];let i=0,j=0;
+  while(i<debt.length&&j<cred.length){const x=Math.min(debt[i].n,cred[j].n);out.push({from:debt[i].id,to:cred[j].id,amt:x});debt[i].n-=x;cred[j].n-=x;if(debt[i].n<0.5)i++;if(cred[j].n<0.5)j++}
+  return out;
+}
+
+/* ---------- render ---------- */
+let dashWho=null;try{dashWho=localStorage.getItem("trip-dash-who")}catch(e){}
+function renderMini(){
+  const el=$("mini");
+  if(mode!=="shared"||!settings.members.length){el.innerHTML="";el.hidden=true;return}
+  el.hidden=false;
+  if(!$("dashWho")){el.innerHTML=`<label class="dash-pick">Show expenses for<select id="dashWho"></select></label><div id="dashBox"></div>`;
+    $("dashWho").onchange=()=>{dashWho=$("dashWho").value;try{localStorage.setItem("trip-dash-who",dashWho)}catch(e){}renderMini()}}
+  const sel=$("dashWho");const key=settings.members.map(m=>m.id+":"+m.name).join("|");
+  if(sel.dataset.key!==key){sel.innerHTML=`<option value="__all">Whole trip (everyone)</option>`+settings.members.map(m=>`<option value="${m.id}">${esc(m.name)}</option>`).join("");sel.dataset.key=key}
+  if(dashWho!=="__all"&&!settings.members.some(m=>m.id===dashWho))dashWho=settings.members[0].id;
+  if(sel.value!==dashWho)sel.value=dashWho;
+  const id=dashWho;let shared=0,pers=0;const items=[];
+  if(id==="__all"){
+    for(const e of expenses){const t=toTHB(e);isPersonal(e)?pers+=t:shared+=t;items.push({e,amt:t,kind:isPersonal(e)?"Personal":"Shared",all:true})}
+  }else for(const e of expenses){const t=toTHB(e);
+    if(isPersonal(e)){if(e.paidBy===id){pers+=t;items.push({e,amt:t,kind:"Personal"})}}
+    else{const sp=(e.split||[]).filter(x=>settings.members.some(m=>m.id===x));const shs=sharesOf(e);if(sp.includes(id)){const sh=shs[id];shared+=sh;items.push({e,amt:sh,kind:"Shared"})}}}
+  items.sort((a,b)=>(b.e.date||"").localeCompare(a.e.date||"")||(b.e.createdAt||0)-(a.e.createdAt||0));
+  $("dashBox").innerHTML=`<div class="pbox dash">
+    <div class="pb-name">${id==="__all"?`<span class="av" aria-hidden="true">${settings.members.length}</span><b>Whole trip · all ${settings.members.length} people</b>`:`${av(id)}<b>${esc(nameOf(id))}</b>`}</div>
+    <span class="pb-total num">${fmt(Math.round(shared+pers))}</span>
+    <div class="pb-lines">
+      <span><i class="dot s"></i>Shared<b class="num">${fmt(Math.round(shared))}</b></span>
+      <span><i class="dot p"></i>Personal<b class="num">${pers>=0.5?fmt(Math.round(pers)):"–"}</b></span>
+    </div>
+    ${items.length?`<div class="dash-items">${items.map(x=>`<div class="di"><span class="di-t"><b>${esc(x.e.title||"Untitled")}</b><small>${x.all?`${x.kind} · paid by ${esc(nameOf(x.e.paidBy))}`:x.kind}${!x.all&&x.kind==="Shared"?` · ${wOf(x.e,id)>1?wOf(x.e,id)+" shares":"1 share"} of ${fmt(Math.round(toTHB(x.e)))}`:""}</small></span><span class="num ${x.kind==="Personal"?"di-p":""}">${fmt(Math.round(x.amt))}</span></div>`).join("")}</div>`:`<span class="hint">No expenses ${id==="__all"?"":"for "+esc(nameOf(id))+" "}yet.</span>`}
+  </div>`;
+}
+function render(){
+  const total=expenses.reduce((s,e)=>s+toTHB(e),0);const n=settings.members.length;
+  renderMini();
+  $("tripMeta").textContent="Joie · "+settings.members.length+(settings.members.length===1?" traveller":" travellers");
+  $("addBtn").disabled=!canWrite;
+  renderLedger();renderBalances();renderSetup();
+}
+function renderLedger(){
+  const el=$("ledger");
+  if(mode==="connecting"){el.innerHTML=emptyBox("Loading trip…","");return}
+  if(!settings.members.length){el.innerHTML=`<div class="list"><div class="empty"><b>Add the travellers first</b><span>Put in the 8 names once, then anyone can log what they paid.</span><button class="btn" id="goSetup">Add people</button></div></div>`;$("goSetup").onclick=()=>showTab("setup");return}
+  if(!expenses.length){el.innerHTML=`<div class="list"><div class="empty"><b>No expenses yet</b><span>Tap “Add expense” for the first one — the hotel booking, a taxi, dinner. Pay in HKD, CNY or THB; everything converts to baht.</span></div></div>`;return}
+  const sorted=[...expenses].sort((a,b)=>(b.date||"").localeCompare(a.date||"")||(b.createdAt||0)-(a.createdAt||0));
+  let html='<div class="list">',last=null;
+  for(const e of sorted){
+    if(e.date!==last){last=e.date;html+=`<div class="day">${e.date?new Date(e.date+"T00:00").toLocaleDateString("en-GB",{weekday:"short",day:"numeric",month:"short"}):"No date"}</div>`}
+    const splitN=(e.split||[]).length, all=splitN===settings.members.length;
+    html+=`<div class="row"><div class="cat" aria-hidden="true">${CAT_SHORT[e.cat]||"ETC"}</div>
+      <div class="t"><b>${esc(e.title||"Untitled")}${isPersonal(e)?'<span class="tag">Personal</span>':""}</b><span><span class="by">${av(e.paidBy)}Paid by <b>${esc(nameOf(e.paidBy))}</b></span>${isPersonal(e)?"":" · "+(all?"split by all "+splitN:"split by "+splitN)+(e.split||[]).filter(id=>wOf(e,id)>1).map(id=>` · ${esc(nameOf(id))} ×${wOf(e,id)}`).join("")}</span></div>
+      <div class="amt"><span class="num">${fmt(e.amount,e.cur)}</span>${e.cur!=="THB"?`<small class="num">${fmt(toTHB(e))}</small>`:""}</div>
+      ${canWrite||e.hasReceipt?`<div class="acts">${e.hasReceipt?`<button class="link" data-rc="${e.id}">Receipt</button>`:""}${canWrite?`<button class="link" data-edit="${e.id}">Edit</button><button class="link danger" data-del="${e.id}">${armedDelete===e.id?"Tap again to delete":"Delete"}</button>`:""}</div>`:""}
+    </div>`;
+  }
+  el.innerHTML=html+"</div>";
+  el.querySelectorAll("[data-edit]").forEach(b=>b.onclick=()=>openForm(b.dataset.edit));
+  el.querySelectorAll("[data-rc]").forEach(b=>b.onclick=()=>showReceipt(b.dataset.rc));
+  el.querySelectorAll("[data-del]").forEach(b=>b.onclick=async()=>{const id=b.dataset.del;if(armedDelete===id){armedDelete=null;await api.delExpense(id).catch(err)}else{armedDelete=id;renderLedger();setTimeout(()=>{if(armedDelete===id){armedDelete=null;renderLedger()}},4000)}});
+}
+function emptyBox(t,s){return `<div class="list"><div class="empty"><b>${t}</b><span>${s}</span></div></div>`}
+function renderTotal(){
+  const el=$("total");
+  if(!expenses.length){el.innerHTML=emptyBox("No spending yet","The trip total builds up as people log expenses.");return}
+  let shared=0,personal=0;const byCat={},byCur={},byDay={};
+  for(const e of expenses){const t=toTHB(e);isPersonal(e)?personal+=t:shared+=t;byCat[e.cat||"other"]=(byCat[e.cat||"other"]||0)+t;byCur[e.cur]=(byCur[e.cur]||0)+e.amount;const d=e.date||"";byDay[d]=(byDay[d]||0)+t}
+  const total=shared+personal;const pct=x=>total?(x/total*100).toFixed(1):0;
+  const cats=Object.entries(byCat).sort((a,b)=>b[1]-a[1]);const maxC=cats[0][1];
+  const days=Object.entries(byDay).sort((a,b)=>a[0].localeCompare(b[0]));const maxD=Math.max(...days.map(d=>d[1]));
+  el.innerHTML=`<div class="hero"><span class="eyebrow">Everyone together spent</span><span class="big">${fmt(Math.round(total))}</span>
+    <div class="stack"><i class="s" style="width:${pct(shared)}%"></i><i class="p" style="width:${pct(personal)}%"></i></div>
+    <div class="legend"><span><i style="background:var(--accent)"></i>Shared <b class="num">${fmt(Math.round(shared))}</b></span><span><i style="background:var(--warm)"></i>Personal <b class="num">${fmt(Math.round(personal))}</b></span></div></div>
+  <h2>By category</h2><div class="list">${cats.map(([k,v])=>`<div class="kv"><span>${CATS[k]||"Other"}</span><span class="num">${fmt(Math.round(v))} <small style="color:var(--muted)">${pct(v)}%</small></span><div class="bar"><i style="width:${(v/maxC*100).toFixed(1)}%"></i></div></div>`).join("")}</div>
+  <h2>By currency paid</h2><div class="list">${Object.entries(byCur).map(([c,v])=>`<div class="kv"><span>${c}</span><span class="num">${fmt(v,c)}${c!=="THB"?` <small style="color:var(--muted)">≈ ${fmt(Math.round(v*(settings.rates[c]||1)))}</small>`:""}</span></div>`).join("")}</div>
+  <h2>By day</h2><div class="list">${days.map(([d,v])=>`<div class="kv"><span>${d?new Date(d+"T00:00").toLocaleDateString("en-GB",{weekday:"short",day:"numeric",month:"short"}):"No date"}</span><span class="num">${fmt(Math.round(v))}</span><div class="bar"><i style="width:${(v/maxD*100).toFixed(1)}%"></i></div></div>`).join("")}</div>`;
+}
+function renderPeople(){
+  const el=$("people");
+  if(!settings.members.length||!expenses.length){el.innerHTML=emptyBox("Nothing per person yet","Each traveller’s shared and personal spending shows here once expenses are logged.");return}
+  const p={};settings.members.forEach(m=>p[m.id]={shared:0,personal:0,paid:0,n:0});
+  for(const e of expenses){const t=toTHB(e);if(p[e.paidBy])p[e.paidBy].paid+=t;
+    if(isPersonal(e)){if(p[e.paidBy]){p[e.paidBy].personal+=t;p[e.paidBy].n++}}
+    else{const sp=(e.split||[]).filter(id=>p[id]);sp.forEach(id=>{p[id].shared+=t/sp.length;p[id].n++})}}
+  const rows=settings.members.map(m=>({m,...p[m.id],total:p[m.id].shared+p[m.id].personal})).sort((a,b)=>b.total-a.total);
+  const max=Math.max(1,...rows.map(r=>r.total));
+  const gS=rows.reduce((a,r)=>a+r.shared,0),gP=rows.reduce((a,r)=>a+r.personal,0),gT=gS+gP;
+  el.innerHTML=`<div class="hero"><span class="eyebrow">Whole trip · all ${rows.length} people</span><span class="big">${fmt(Math.round(gT))}</span>
+    <div class="stack"><i class="s" style="width:${gT?(gS/gT*100).toFixed(1):0}%"></i><i class="p" style="width:${gT?(gP/gT*100).toFixed(1):0}%"></i></div>
+    <div class="legend"><span><i style="background:var(--accent)"></i>Shared <b class="num">${fmt(Math.round(gS))}</b></span><span><i style="background:var(--warm)"></i>Personal <b class="num">${fmt(Math.round(gP))}</b></span></div></div>
+  <p class="hint">What each trip cost each person, in baht. <b>Shared</b> = their split of group costs. <b>Personal</b> = things only for them. <b>Paid out</b> = cash they actually put down.</p>
+  <div class="legend"><span><i style="background:var(--accent)"></i>Shared</span><span><i style="background:var(--warm)"></i>Personal</span></div>
+  <div class="list">${rows.map(r=>`<div class="pcard"><div class="top"><b style="display:flex;align-items:center;gap:8px">${av(r.m.id)}${esc(r.m.name)}</b><span class="num">${fmt(Math.round(r.total))}</span></div>
+    <div class="stack" style="width:${(r.total/max*100).toFixed(1)}%"><i class="s" style="width:${r.total?(r.shared/r.total*100).toFixed(1):0}%"></i><i class="p" style="width:${r.total?(r.personal/r.total*100).toFixed(1):0}%"></i></div>
+    <div class="grid"><span>Shared<b class="num">${fmt(Math.round(r.shared))}</b></span><span>Personal<b class="num">${fmt(Math.round(r.personal))}</b></span><span>Paid out<b class="num">${fmt(Math.round(r.paid))}</b></span></div></div>`).join("")}
+    <div class="pcard" style="background:var(--accent-soft)"><div class="top"><b>Everyone together</b><span class="num">${fmt(Math.round(gT))}</span></div>
+    <div class="grid"><span>Shared<b class="num">${fmt(Math.round(gS))}</b></span><span>Personal<b class="num">${fmt(Math.round(gP))}</b></span><span>Paid out<b class="num">${fmt(Math.round(rows.reduce((a,r)=>a+r.paid,0)))}</b></span></div></div></div>`;
+}
+function debts(){
+  const ids=new Set(settings.members.map(m=>m.id));
+  const paidMap={};payments.forEach(p=>{if(p.expenseId)paidMap[p.expenseId+"|"+p.from]=p});
+  const list=[];
+  for(const e of expenses){if(isPersonal(e))continue;const sp=(e.split||[]).filter(id=>ids.has(id));if(!sp.length)continue;
+    const shs=sharesOf(e);
+    for(const id of sp){if(id===e.paidBy)continue;const pay=paidMap[e.id+"|"+id]||null;list.push({e,from:id,to:e.paidBy,amt:shs[id],pay,pid:e.id+"_"+id})}}
+  return list;
+}
+async function markPaid(items){
+  const today=new Date().toISOString().slice(0,10);
+  for(const d of items){await api.setPayment(d.pid,{expenseId:d.e.id,from:d.from,to:d.to,amt:Math.round(d.amt*100)/100,date:today,createdAt:Date.now()})}
+}
+function renderBalances(){
+  const el=$("balances");
+  if(!settings.members.length||!expenses.length){el.innerHTML=emptyBox("Nothing to settle yet","Shared expenses show here once they are logged.");return}
+  const D=debts();const legacy=payments.filter(p=>!p.expenseId);
+  const unpaid=D.filter(d=>!d.pay);
+  const legacyAmt=legacy.reduce((a,p)=>a+p.amt,0);
+  const totalDebt=D.reduce((a,d)=>a+d.amt,0);
+  const outstanding=Math.max(0,unpaid.reduce((a,d)=>a+d.amt,0)-legacyAmt);
+  const repaid=Math.max(0,totalDebt-outstanding);
+  const pct=totalDebt?repaid/totalDebt*100:100;
+  const dstr=d=>d?new Date(d+"T00:00").toLocaleDateString("en-GB",{day:"numeric",month:"short"}):"";
+  let html=`<div class="hero settle-hero">
+    <div class="top"><div><span class="eyebrow">Still to pay back</span><span class="big ${outstanding>=0.5?"neg":"pos"}">${outstanding>=0.5?fmt(Math.round(outstanding)):"All settled"}</span></div>
+    <div class="ring" style="--p:${pct.toFixed(1)}"><span class="num">${Math.round(pct)}%</span></div></div>
+    <div class="prog"><i style="width:${pct.toFixed(1)}%"></i></div>
+    <span class="hint num">${fmt(Math.round(repaid))} of ${fmt(Math.round(totalDebt))} repaid · ${unpaid.length} share${unpaid.length===1?"":"s"} unpaid</span>
+    ${canWrite&&unpaid.length?`<button class="btn" id="payAll" ${bulkBusy?"disabled":""}>${bulkBusy?"Saving…":armedAll?`Tap again to mark all ${unpaid.length} paid`:"Mark all paid"}</button>`:""}</div>`;
+  const net={};settings.members.forEach(m=>net[m.id]=0);
+  unpaid.forEach(d=>{if(d.from in net)net[d.from]-=d.amt;if(d.to in net)net[d.to]+=d.amt});
+  legacy.forEach(p=>{if(p.from in net)net[p.from]+=p.amt;if(p.to in net)net[p.to]-=p.amt});
+  html+=`<h2>By person</h2><div class="list">${settings.members.map(m=>{const n=net[m.id];const st=n<=-0.5?"owe":n>=0.5?"get":"done";
+    return `<div class="kv"><span style="display:flex;align-items:center;gap:8px;min-width:0">${av(m.id)}<b>${esc(m.name)}</b></span><span class="pill ${st}">${st==="owe"?"Owes "+fmt(Math.round(-n)):st==="get"?"Gets "+fmt(Math.round(n)):"Settled"}</span></div>`}).join("")}</div>`;
+  const byE=new Map();D.forEach(d=>{if(!byE.has(d.e.id))byE.set(d.e.id,[]);byE.get(d.e.id).push(d)});
+  const exps=[...byE.keys()].map(id=>expenses.find(e=>e.id===id)).sort((a,b)=>(b.date||"").localeCompare(a.date||"")||(b.createdAt||0)-(a.createdAt||0));
+  html+=`<h2>By expense</h2><p class="hint">Tap an expense to see each person’s share. Personal expenses aren’t listed.</p><div class="etable"><div class="et-head"><span>Expense</span><span>Total</span><span>Paid</span></div>`;
+  for(const e of exps){const rows=byE.get(e.id);const left=rows.filter(d=>!d.pay);const st=left.length?"owe":"done";
+    let lines="";
+    for(const d of rows){
+      lines+=d.pay?`<div class="line done"><span class="dir">✓ Paid</span>${av(d.from)}<span class="nm">${esc(nameOf(d.from))} <small>${dstr(d.pay.date)}</small></span><span class="num amt">${fmt(Math.round(d.amt))}</span>${canWrite?`<button class="link" data-undo="${d.pay.id}">${armedUndo===d.pay.id?"Tap to undo":"Undo"}</button>`:`<span class="wait"></span>`}</div>`
+        :`<div class="line"><span class="dir">Owes</span>${av(d.from)}<span class="nm">${esc(nameOf(d.from))}</span><span class="num amt neg">${fmt(Math.round(d.amt))}</span>${canWrite?`<button class="btn small" data-pay1="${d.pid}">Mark paid</button>`:`<span class="wait">Unpaid</span>`}</div>`}
+    html+=`<details class="et-row ${st}" data-eid="${e.id}" ${openExp.has(e.id)?"open":""}>
+      <summary><span class="et-name"><b>${esc(e.title||"Untitled")}</b><small class="num">${dstr(e.date)} · ${esc(nameOf(e.paidBy))} paid</small></span><span class="num et-amt">${fmt(Math.round(toTHB(e)))}</span><span class="pill ${st}">${left.length?`${rows.length-left.length}/${rows.length}`:"All"}</span><span class="chev" aria-hidden="true"></span></summary>
+      <div class="lines">${lines}${canWrite&&left.length>1?`<div class="line one"><button class="btn ghost small" data-payexp="${e.id}">Mark all ${left.length} paid for this expense</button></div>`:""}</div>
+    </details>`}
+  html+=`</div>`;
+  if(legacy.length){html+=`<h2>Other repayments</h2><p class="hint">Recorded before shares were tracked per expense. They still count in each person’s balance above.</p><div class="list">${legacy.map(p=>`<div class="transfer done"><div class="who"><span class="check">✓</span>${av(p.from)}<span>${esc(nameOf(p.from))} paid ${esc(nameOf(p.to))}</span><span class="when">${dstr(p.date)}</span></div><div class="amt-col"><span class="num">${fmt(Math.round(p.amt))}</span>${canWrite?`<button class="link" data-undo="${p.id}">${armedUndo===p.id?"Tap again to undo":"Undo"}</button>`:""}</div></div>`).join("")}</div>`}
+  el.innerHTML=html;
+  el.querySelectorAll("details[data-eid]").forEach(d=>d.addEventListener("toggle",()=>{d.open?openExp.add(d.dataset.eid):openExp.delete(d.dataset.eid)}));
+  const run=async items=>{bulkBusy=true;armedAll=false;renderBalances();try{await markPaid(items)}catch(e){err(e)}bulkBusy=false;renderBalances()};
+  const pa=$("payAll");if(pa)pa.onclick=()=>{if(bulkBusy)return;if(!armedAll){armedAll=true;renderBalances();setTimeout(()=>{if(armedAll){armedAll=false;renderBalances()}},4000);return}run(debts().filter(d=>!d.pay))};
+  el.querySelectorAll("[data-pay1]").forEach(b=>b.onclick=async()=>{const d=debts().find(x=>x.pid===b.dataset.pay1);if(!d)return;b.disabled=true;b.textContent="Saving…";try{await markPaid([d])}catch(e){err(e);b.disabled=false;b.textContent="Mark paid"}});
+  el.querySelectorAll("[data-payexp]").forEach(b=>b.onclick=()=>run(debts().filter(d=>!d.pay&&d.e.id===b.dataset.payexp)));
+  el.querySelectorAll("[data-undo]").forEach(btn=>btn.onclick=async()=>{const id=btn.dataset.undo;if(armedUndo===id){armedUndo=null;await api.delPayment(id).catch(err)}else{armedUndo=id;renderBalances();setTimeout(()=>{if(armedUndo===id){armedUndo=null;renderBalances()}},4000)}});
+}
+function renderSetup(){
+  const el=$("setup");
+  if(el.contains(document.activeElement))return; // don't clobber typing
+  const r=settings.rates;
+  el.innerHTML=`<div class="codebox"><span class="eyebrow" style="color:#fffaf3">Trip code</span><span class="code">${esc(tripCode)}</span><span style="font-size:13px;opacity:.92">Friends open Joie, tap Join a trip and type this code.</span><div class="row2"><button class="btn" type="button" id="shareCode">Share</button><button class="btn" type="button" id="copyCode">Copy code</button></div></div>
+  <div class="card">
+    <h2 style="margin:0">Travellers</h2><p class="hint">Names show in “Paid by” and the split. ${canWrite?"Tap a circle to add a photo.":""}</p>
+    <div id="memberList" style="display:flex;flex-direction:column;gap:8px">${settings.members.map(m=>`<div class="member">${canWrite?`<label class="avpick" aria-label="Photo for ${esc(m.name)}">${av(m.id)}<input type="file" accept="image/*" class="vh" id="p-${m.id}" data-photo="${m.id}"></label>`:av(m.id)}<input id="m-${m.id}" value="${esc(m.name)}" data-mid="${m.id}" ${canWrite?"":"disabled"}>${canWrite?`<button class="link danger" data-rm="${m.id}">Remove</button>`:""}</div>`).join("")}</div>
+    ${canWrite?`<div class="member"><input id="newMember" placeholder="Add a name"><button class="btn" id="addMember" style="padding:10px 14px">Add</button></div>`:""}
+  </div>
+</div>
+  <div class="card"><button class="btn ghost" type="button" id="leaveTrip">Remove this trip from my phone</button><p class="hint">The trip stays for everyone else. You can join again with the code.</p></div>`;
+  const shareText=`Join our trip “${tripTitle}” on Joie: ${location.origin+location.pathname}\nTrip code: ${tripCode}`;
+  $("shareCode").onclick=async()=>{try{if(navigator.share){await navigator.share({title:"Joie",text:shareText});return}}catch(e){if(e&&e.name==="AbortError")return}try{await navigator.clipboard.writeText(shareText);$("shareCode").textContent="Copied invite"}catch(e){}};
+  $("copyCode").onclick=async()=>{try{await navigator.clipboard.writeText(tripCode);$("copyCode").textContent="Copied"}catch(e){}};
+  $("leaveTrip").onclick=()=>{const b=$("leaveTrip");if(b.dataset.armed!=="1"){b.dataset.armed="1";b.textContent="Tap again to remove";return}const id=tripId;const u=auth.currentUser;if(u)deleteDoc(doc(fdb,"trips",id,"joiners",u.uid)).catch(()=>{});forgetTrip(id);showWelcome()};
+  if(!canWrite)return;
+  const addM=async()=>{const v=$("newMember").value.trim();if(!v)return;const s=structuredClone(settings);s.members.push({id:uid(),name:v});$("newMember").value="";await api.saveSettings(s).catch(err);$("newMember")?.focus()};
+  $("addMember").onclick=addM;$("newMember").onkeydown=e=>{if(e.key==="Enter"){e.preventDefault();addM()}};
+  el.querySelectorAll("[data-mid]").forEach(i=>i.onchange=()=>{const s=structuredClone(settings);const m=s.members.find(x=>x.id===i.dataset.mid);if(m&&i.value.trim()){m.name=i.value.trim();api.saveSettings(s).catch(err)}});
+  el.querySelectorAll("[data-photo]").forEach(inp=>inp.onchange=async()=>{const f=inp.files&&inp.files[0];if(!f)return;try{const img=await shrink(f);document.activeElement?.blur();await api.setAvatar(inp.dataset.photo,img)}catch(e){document.activeElement?.blur();if(e?.message==="image")$("status").innerHTML="<b>Couldn’t read that photo</b> — try a JPG or PNG";else err(e)}});
+  el.querySelectorAll("[data-rm]").forEach(b=>b.onclick=()=>{const id=b.dataset.rm;const used=expenses.some(e=>e.paidBy===id||(e.split||[]).includes(id));if(used&&b.dataset.armed!=="1"){b.dataset.armed="1";b.textContent="Has expenses — tap to remove";return}const s=structuredClone(settings);s.members=s.members.filter(m=>m.id!==id);api.saveSettings(s).catch(err)});
+}
+function err(e){console.warn(e);$("status").innerHTML="<b>Couldn’t save</b> — "+esc(e?.code==="invalid_argument"?"you have view-only access":"check your connection and try again")}
+
+/* ---------- tabs ---------- */
+function showTab(t){document.querySelectorAll(".tabs button").forEach(b=>b.setAttribute("aria-selected",b.dataset.tab===t));["ledger","balances","setup"].forEach(s=>$(s).hidden=s!==t)}
+document.querySelectorAll(".tabs button").forEach(b=>b.onclick=()=>showTab(b.dataset.tab));
+
+/* ---------- form ---------- */
+let split=new Set(),kind="shared",wts={};
+function setKind(k){kind=k;$("k-shared").setAttribute("aria-pressed",k==="shared");$("k-personal").setAttribute("aria-pressed",k==="personal");$("splitBox").hidden=k==="personal";updatePreview()}
+function drawSplit(){$("f-split").innerHTML=settings.members.map(m=>`<button type="button" class="chip${wts[m.id]>1?" x2":""}" aria-pressed="${split.has(m.id)}" data-sid="${m.id}">${esc(m.name)}${split.has(m.id)&&wts[m.id]>1?` <b>×2</b>`:""}</button>`).join("");$("f-split").querySelectorAll("[data-sid]").forEach(c=>c.onclick=()=>{const id=c.dataset.sid;if(!split.has(id)){split.add(id);delete wts[id]}else if(!(wts[id]>1)){wts[id]=2}else{split.delete(id);delete wts[id]}drawSplit()});updatePreview()}
+function updatePreview(){const a=parseFloat($("f-amount").value);const cur=$("f-cur").value;if(kind==="personal"){$("preview").textContent=a>0&&cur!=="THB"?`${fmt(a,cur)} ≈ ${fmt(a*(settings.rates[cur]||1))} · counts only for the payer`:a>0?"Counts only for the payer":"";return}if(!(a>0)||!split.size){$("preview").textContent="";return}const thb=a*(settings.rates[cur]||1);const n=[...split].reduce((s,id)=>s+(wts[id]>1?2:1),0);const dbl=[...split].filter(id=>wts[id]>1);$("preview").textContent=`${fmt(thb/n)} per share × ${n} shares`+(dbl.length?` · ${dbl.map(id=>nameOf(id)+" pays "+fmt(thb/n*2)).join(", ")}`:"")+(cur!=="THB"?` (${fmt(a,cur)} ≈ ${fmt(thb)})`:"")}
+function drawPayer(){const cur=$("f-payer").value;$("f-payer-chips").innerHTML=settings.members.map(m=>`<button type="button" class="chip" aria-pressed="${m.id===cur}" data-pid="${m.id}">${av(m.id)}${esc(m.name)}</button>`).join("");$("f-payer-chips").querySelectorAll("[data-pid]").forEach(c=>c.onclick=()=>{$("f-payer").value=c.dataset.pid;drawPayer();updatePreview()})}
+function rcStatus(html,cls){const el=$("rcptStatus");if(!html){el.hidden=true;return}el.className="rcpt-status "+(cls||"");el.innerHTML=html;el.hidden=false}
+function showThumb(img){$("rcptThumb").innerHTML=img?`<img src="${esc(img)}" alt="">`:"Receipt";$("rcptHead").textContent=img?"Receipt attached":"Upload receipt";$("rcptSub").textContent=img?"Tap to replace it.":"Take a photo or pick one. Joie fills in the amount and date."}
+function compressReceipt(file){return new Promise((res,rej)=>{const url=URL.createObjectURL(file);const im=new Image();im.onload=()=>{let w=im.width,h=im.height;const k=Math.min(1,1100/Math.max(w,h));w=Math.round(w*k);h=Math.round(h*k);const c=document.createElement("canvas");c.width=w;c.height=h;const g=c.getContext("2d");g.fillStyle="#fff";g.fillRect(0,0,w,h);g.drawImage(im,0,0,w,h);URL.revokeObjectURL(url);let q=.8,d=c.toDataURL("image/jpeg",q);while(d.length>190000&&q>.3){q-=.1;d=c.toDataURL("image/jpeg",q)}if(d.length>190000){const c2=document.createElement("canvas");c2.width=Math.round(w*.7);c2.height=Math.round(h*.7);c2.getContext("2d").drawImage(c,0,0,c2.width,c2.height);d=c2.toDataURL("image/jpeg",.6)}res(d)};im.onerror=()=>{URL.revokeObjectURL(url);rej(new Error("image"))};im.src=url})}
+function loadScript(u){return new Promise((res,rej)=>{if(window.Tesseract)return res();const s=document.createElement("script");s.src=u;s.onload=res;s.onerror=rej;document.head.appendChild(s)})}
+function parseReceipt(text){
+  const lines=text.split(/\n/).map(s=>s.trim()).filter(Boolean),U=text.toUpperCase(),r={};
+  if(/HK\$|HKD/.test(U))r.currency="HKD";else if(/RMB|CNY|¥|￥|元/.test(text))r.currency="CNY";else if(/฿|THB|บาท/.test(text))r.currency="THB";
+  const nums=(s,dec)=>(s.match(dec?/\d{1,3}(?:,\d{3})*\.\d{2}|\d+\.\d{2}/g:/\d{1,3}(?:,\d{3})+(?:\.\d{1,2})?|\d+(?:\.\d{1,2})?/g)||[]).map(x=>parseFloat(x.replace(/,/g,"")));
+  const words=/grand total|total|amount due|amount paid|balance due|合計|合计|總計|总计|應付|应付|實付|实付|รวม|ยอดชำระ/i;
+  let cand=[];
+  lines.forEach((l,i)=>{if(!words.test(l)||/sub\s*total|小計|小计/i.test(l))return;let n=nums(l);if(!n.length&&lines[i+1])n=nums(lines[i+1]);cand.push(...n)});
+  cand=cand.filter(x=>x>0&&x<1e6);
+  if(cand.length)r.amount=Math.max(...cand);else{const d=lines.flatMap(l=>nums(l,true)).filter(x=>x>0&&x<1e6);if(d.length)r.amount=Math.max(...d)}
+  let m=text.match(/(20\d{2})[-\/.年](\d{1,2})[-\/.月](\d{1,2})/);
+  if(m)r.date=`${m[1]}-${m[2].padStart(2,"0")}-${m[3].padStart(2,"0")}`;
+  else if((m=text.match(/(\d{1,2})[-\/.](\d{1,2})[-\/.](20\d{2})/)))r.date=`${m[3]}-${m[2].padStart(2,"0")}-${m[1].padStart(2,"0")}`;
+  r.title=lines.find(l=>{const letters=(l.match(/\p{L}/gu)||[]).length;return l.length>=2&&l.length<=40&&letters*2>=l.length});
+  return r;
+}
+async function scanReceipt(file){
+  scanCtl={};const ctl=scanCtl;
+  rcStatus('<span class="spin"></span>Reading receipt… the first time takes a little longer.');
+  try{
+    await loadScript("https://cdn.jsdelivr.net/npm/tesseract.js@5.1.1/dist/tesseract.min.js");
+    const {data}=await window.Tesseract.recognize(file,"eng");
+    if(ctl!==scanCtl)return;
+    const r=parseReceipt(data.text||"");const filled=[];
+    if(r.title&&!$("f-title").value.trim()){$("f-title").value=r.title.slice(0,60);filled.push("name")}
+    if(r.amount>0){$("f-amount").value=Math.round(r.amount*100)/100;filled.push("amount")}
+    if(r.currency){$("f-cur").value=r.currency;filled.push("currency")}
+    if(r.date){$("f-date").value=r.date;filled.push("date")}
+    updatePreview();
+    rcStatus(filled.length?`Filled in ${filled.join(", ")} from the receipt. Check them before saving.`:"Couldn’t read the details. Fill them in below; the photo is still attached.",filled.length?"ok":"warn");
+  }catch(e){
+    if(ctl!==scanCtl)return;
+    console.warn(e);rcStatus("Couldn’t read the receipt. Fill in the details below; the photo is still attached.","warn");
+  }
+}
+$("f-receipt").onchange=async()=>{const f=$("f-receipt").files&&$("f-receipt").files[0];$("f-receipt").value="";if(!f)return;
+  try{receiptData=await compressReceipt(f);receiptChanged=true;showThumb(receiptData)}catch(e){rcStatus("Couldn’t open that photo. Try a JPG or PNG.","warn");return}
+  scanReceipt(f)};
+async function showReceipt(id){const e=expenses.find(x=>x.id===id);$("viewerCap").textContent=e?`${e.title} · ${fmt(e.amount,e.cur)} · paid by ${nameOf(e.paidBy)}`:"";$("viewerImg").removeAttribute("src");$("viewer").hidden=false;try{const img=await api.getReceipt(id);if(img)$("viewerImg").src=img;else $("viewerCap").textContent="Receipt not found."}catch(err){$("viewerCap").textContent="Couldn’t load the receipt."}}
+$("viewerClose").onclick=()=>{$("viewer").hidden=true};$("viewer").onclick=e=>{if(e.target.id==="viewer")$("viewer").hidden=true};
+function openForm(id){
+  if(!settings.members.length){showTab("setup");return}
+  editingId=id||null;const e=id?expenses.find(x=>x.id===id):null;
+  $("formTitle").textContent=e?"Edit expense":"Add expense";
+  $("f-payer").innerHTML=settings.members.map(m=>`<option value="${m.id}">${esc(m.name)}</option>`).join("");
+  $("f-cat").innerHTML=Object.entries(CATS).map(([k,v])=>`<option value="${k}">${v}</option>`).join("");
+  $("f-title").value=e?.title||"";$("f-amount").value=e?.amount??"";$("f-cur").value=e?.cur||"HKD";
+  $("f-payer").value=e?.paidBy||settings.members[0].id;$("f-cat").value=e?.cat||"food";
+  $("f-date").value=e?.date||new Date().toISOString().slice(0,10);
+  split=new Set(e?.split||settings.members.map(m=>m.id));wts={...(e?.weights||{})};
+  scanCtl=null;scanCtl=null;receiptData=null;receiptChanged=false;showThumb(null);rcStatus("");
+  if(e?.hasReceipt){api.getReceipt(e.id).then(img=>{if(editingId===e.id&&!receiptChanged&&img){receiptData=img;showThumb(img);$("rcptSub").textContent="Tap to replace it."}}).catch(()=>{})}
+  drawPayer();
+  $("formErr").hidden=true;drawSplit();setKind(e&&isPersonal(e)?"personal":"shared");$("sheet").hidden=false;}
+function closeForm(){scanCtl=null;scanCtl=null;$("sheet").hidden=true;editingId=null}
+$("addBtn").onclick=()=>openForm();
+$("cancel").onclick=closeForm;
+$("sheet").onclick=e=>{if(e.target.id==="sheet")closeForm()};
+$("splitAll").onclick=()=>{split=new Set(settings.members.map(m=>m.id));drawSplit()};
+$("splitNone").onclick=()=>{split=new Set();wts={};drawSplit()};
+$("k-shared").onclick=()=>setKind("shared");$("k-personal").onclick=()=>setKind("personal");
+$("f-amount").oninput=updatePreview;$("f-cur").onchange=updatePreview;
+$("form").onsubmit=async ev=>{
+  ev.preventDefault();
+  const title=$("f-title").value.trim(),amount=parseFloat(String($("f-amount").value).replace(/,/g,""));
+  const fail=m=>{$("formErr").textContent=m;$("formErr").hidden=false};
+  if(!title)return fail("Add what this was for.");
+  if(!(amount>0))return fail("Enter an amount above zero.");
+  if(kind==="shared"&&!split.size)return fail("Pick at least one person to split with.");
+  const prev=editingId?expenses.find(x=>x.id===editingId):null;
+  const data={title,amount:Math.round(amount*100)/100,cur:$("f-cur").value,paidBy:$("f-payer").value,cat:$("f-cat").value,date:$("f-date").value,kind,split:kind==="personal"?[$("f-payer").value]:[...split],weights:kind==="personal"?{}:Object.fromEntries([...split].filter(id=>wts[id]>1).map(id=>[id,2])),createdAt:prev?.createdAt||Date.now(),hasReceipt:receiptChanged?!!receiptData:!!prev?.hasReceipt};
+  const id=editingId||uid();
+  $("save").disabled=true;
+  try{if(receiptChanged)await api.setReceipt(id,receiptData);await api.putExpense(id,data);closeForm()}catch(e){fail(e?.code==="invalid_argument"?"You have view-only access.":"Couldn’t save. Check your connection and try again.")}
+  $("save").disabled=false;
+};
+document.addEventListener("keydown",e=>{if(e.key!=="Escape")return;if(!$("viewer").hidden)$("viewer").hidden=true;else if(!$("sheet").hidden)closeForm()});
+
+$("tripsBtn").onclick=()=>showWelcome();
+$("joinForm").onsubmit=async ev=>{ev.preventDefault();const b=$("joinBtn");b.disabled=true;b.textContent="Joining…";$("welcomeErr").hidden=true;
+  try{await joinTrip($("code-in").value);$("code-in").value=""}catch(e){$("welcomeErr").textContent=e?.code==="permission-denied"?"That code didn’t work. Check it and try again.":(e?.message&&!e.code?e.message:"Couldn’t join. Check your internet and try again.");$("welcomeErr").hidden=false}
+  b.disabled=false;b.textContent="Join trip"};
+$("newForm").onsubmit=async ev=>{ev.preventDefault();const name=$("new-name").value.trim();const names=$("new-people").value.split(/\n|,/).map(s=>s.trim()).filter(Boolean);
+  if(!name){$("welcomeErr").textContent="Give the trip a name.";$("welcomeErr").hidden=false;return}
+  const b=$("newBtn");b.disabled=true;b.textContent="Creating…";$("welcomeErr").hidden=true;
+  try{await createTrip(name,names);$("new-name").value="";$("new-people").value=""}catch(e){console.warn(e);$("welcomeErr").textContent="Couldn’t create the trip. Check your internet and try again.";$("welcomeErr").hidden=false}
+  b.disabled=false;b.textContent="Create trip"};
+if("serviceWorker" in navigator)navigator.serviceWorker.register("sw.js").catch(()=>{});
+connect();
+})();
+</script>
+</body>
+</html>
