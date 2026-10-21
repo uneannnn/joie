@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>Joie</title>
 <meta name="description" content="Split trip costs with friends. Join with a 6-letter code.">
-<meta name="theme-color" content="#8ea4cf">
+<meta name="theme-color" content="#fcf0ed">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
@@ -31,6 +31,7 @@ img{max-width:100%}
   --warm:#e07a4f; --warm-soft:#fde6d8; --owe:#c4513a; --get:#4a7a2a;
   --sky:linear-gradient(180deg,#8ea4cf 0%,#b9bfdc 45%,#f3c6a5 80%,#f4a77f 100%);
   --dusk:linear-gradient(100deg,#6f88bd 0%,#a9a6cf 45%,#f09a6e 100%);
+  --sky-ink:#fffaf3;
   --display:"Young Serif","IBM Plex Sans Thai",Georgia,serif;
   --body:"IBM Plex Sans Thai",system-ui,-apple-system,sans-serif;
   --mono:"IBM Plex Mono",ui-monospace,Menlo,monospace;
@@ -195,15 +196,15 @@ h2{font-weight:400}
 .eyebrow{color:var(--warm)}
 header{position:relative;padding:18px 16px 16px;border-radius:18px;background:var(--sky);overflow:hidden}
 header::after{content:"";position:absolute;left:0;right:0;bottom:0;height:10px;background:var(--accent);opacity:.9}
-header h1{background:none;color:#fffaf3;text-shadow:0 1px 12px rgba(60,50,90,.25)}
-header .eyebrow{color:#fffaf3;opacity:.9}
-header .route{color:#fffaf3}
+header h1{background:none;color:var(--sky-ink);text-shadow:0 1px 12px rgba(60,50,90,.25)}
+header .eyebrow{color:var(--sky-ink);opacity:.9}
+header .route{color:var(--sky-ink)}
 header .route i{border-top-color:rgba(255,250,243,.7)}
 header .status{color:#2a2f45;background:rgba(255,250,243,.7);padding:3px 10px;border-radius:999px;align-self:flex-start;margin-bottom:6px}
 header .status b{color:#a5432a}
 .btn{background:var(--accent);color:var(--accent-ink)}
 .btn.ghost{background:transparent;color:var(--ink);border:1px solid var(--line)}
-.dock .btn{box-shadow:0 8px 22px rgba(74,122,42,.28)}
+.dock .btn{box-shadow:0 8px 22px rgba(0,0,0,.18)}
 .hero{border-color:var(--line);background:var(--surface);border-top:4px solid transparent;background-image:linear-gradient(var(--surface),var(--surface)),var(--dusk);background-origin:border-box;background-clip:padding-box,border-box}
 .hero .big.neg{color:var(--owe)}
 .tabs button[aria-selected="true"]{background:var(--accent);color:var(--accent-ink)}
@@ -285,28 +286,66 @@ header .status b{color:#a5432a}
 .topbar{display:flex;justify-content:space-between;align-items:center;gap:10px}
 .trips-btn{border:0;background:rgba(255,250,243,.75);color:#2a2f45;font:600 13px var(--body);padding:6px 12px;border-radius:999px;cursor:pointer}
 .welcome{display:flex;flex-direction:column;gap:16px}
-.welcome .hero-sky{background:var(--sky);border-radius:22px;padding:24px 20px;color:#fffaf3;display:flex;flex-direction:column;gap:8px}
-.welcome .hero-sky h1{background:none;color:#fffaf3;font-size:clamp(34px,10vw,46px)}
+.welcome .hero-sky{background:var(--sky);border-radius:22px;padding:24px 20px;color:var(--sky-ink);display:flex;flex-direction:column;gap:8px}
+.welcome .hero-sky h1{background:none;color:var(--sky-ink);font-size:clamp(34px,10vw,46px)}
 .welcome .hero-sky p{margin:0;opacity:.92;max-width:34ch}
 .trip-item{display:flex;align-items:center;gap:12px;padding:12px 14px;border-top:1px solid var(--line);cursor:pointer;background:none;border-left:0;border-right:0;border-bottom:0;width:100%;text-align:left;font:inherit;color:var(--ink)}
 .trip-item:first-child{border-top:0}
 .trip-item .sun{width:38px;height:38px;border-radius:10px;background:var(--sky);flex:none}
+.swatches{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.swatch{border:1.5px solid var(--line);background:var(--bg);color:var(--ink);border-radius:12px;padding:10px 6px;display:flex;flex-direction:column;align-items:center;gap:6px;font:600 12px var(--body);cursor:pointer}
+.swatch[aria-pressed="true"]{border-color:var(--accent);box-shadow:0 0 0 2px var(--accent-soft)}
+.swatch i{width:34px;height:34px;border-radius:50%;display:block;position:relative;overflow:hidden}
+.swatch i b{position:absolute;right:0;bottom:0;width:15px;height:15px;border-radius:50%;border:2px solid #fff}
 .trip-item b{display:block;font-size:15px}
 .trip-item small{color:var(--muted);font-family:var(--mono);font-size:12px}
-.codebox{background:var(--sky);border-radius:14px;padding:16px;color:#fffaf3;display:flex;flex-direction:column;gap:8px}
+.codebox{background:var(--sky);border-radius:14px;padding:16px;color:var(--sky-ink);display:flex;flex-direction:column;gap:8px}
 .codebox .code{font:600 34px/1 var(--mono);letter-spacing:.18em}
 .codebox .row2{display:flex;gap:8px;flex-wrap:wrap}
 .codebox .btn{background:#fffaf3;color:#2a2f45;border:0}
 #code-in{font:600 22px var(--mono);letter-spacing:.2em;text-transform:uppercase;text-align:center}
 .install-tip{font-size:13px;color:var(--muted);background:var(--surface);border:1px dashed var(--line);border-radius:12px;padding:10px 12px}
 </style>
+<script>
+window.JOIE_PALETTES={
+ lemonade:{name:"Pink Lemonade",
+  light:{bg:"#fcf0ed",surface:"#fffaf8",ink:"#3b2227",muted:"#8b6b71",line:"#f0dad5",accent:"#d9566a","accent-ink":"#ffffff","accent-soft":"#fbe1e2",warm:"#e39a2f","warm-soft":"#fdf0d8",owe:"#c23b4d",get:"#2f8f6b",sky:"linear-gradient(180deg,#f6b4b6 0%,#f9cbc6 45%,#fde1d3 80%,#ffeedd 100%)",dusk:"linear-gradient(100deg,#d9566a,#ec8b84,#f2b25e)","sky-ink":"#5a2430"},
+  dark:{bg:"#211619",surface:"#2d1f23",ink:"#f9e9ea",muted:"#c3a3a9",line:"#47323a",accent:"#f0848e","accent-ink":"#2b1115","accent-soft":"#4b2a31",warm:"#f5b85e","warm-soft":"#4a3621",owe:"#ff8c8c",get:"#6fd3a8",sky:"linear-gradient(180deg,#7d3b48 0%,#a2525c 60%,#c9776a 100%)",dusk:"linear-gradient(100deg,#f0848e,#f5a58f,#f5c27a)","sky-ink":"#fff3f0"}},
+ sunset:{name:"Sunset Bay",
+  light:{bg:"#eef1f6",surface:"#fdfbf7",ink:"#1f2b2e",muted:"#5f6b74",line:"#dde2ea",accent:"#4a7a2a","accent-ink":"#ffffff","accent-soft":"#e3eed6",warm:"#e07a4f","warm-soft":"#fde6d8",owe:"#c4513a",get:"#4a7a2a",sky:"linear-gradient(180deg,#8ea4cf 0%,#b9bfdc 45%,#f3c6a5 80%,#f4a77f 100%)",dusk:"linear-gradient(100deg,#6f88bd 0%,#a9a6cf 45%,#f09a6e 100%)","sky-ink":"#fffaf3"},
+  dark:{bg:"#131a27",surface:"#1c2433",ink:"#eef1f6",muted:"#9aa6b8",line:"#2c3547",accent:"#9cc36a","accent-ink":"#13200a","accent-soft":"#283a22",warm:"#f4a37a","warm-soft":"#3d2a24",owe:"#f2876f",get:"#9cc36a",sky:"linear-gradient(180deg,#3e4f7a 0%,#6b6a93 55%,#a5715f 100%)",dusk:"linear-gradient(100deg,#9fb3dc 0%,#c7b9dc 45%,#f6ad85 100%)","sky-ink":"#fffaf3"}},
+ matcha:{name:"Matcha",
+  light:{bg:"#f2f4ec",surface:"#fcfcf7",ink:"#263021",muted:"#6a7562",line:"#dfe4d4",accent:"#5b8a3c","accent-ink":"#ffffff","accent-soft":"#e4eed8",warm:"#c98f3e","warm-soft":"#f6ead6",owe:"#b9503a",get:"#5b8a3c",sky:"linear-gradient(180deg,#a9c48e 0%,#cfdcb4 50%,#efe7cf 100%)",dusk:"linear-gradient(100deg,#5b8a3c,#9ab76c,#d8b878)","sky-ink":"#24331b"},
+  dark:{bg:"#161b14",surface:"#1f261c",ink:"#eef2e8",muted:"#a3ad98",line:"#313b2c",accent:"#a3cf7c","accent-ink":"#15200c","accent-soft":"#2a3a20",warm:"#e3b06a","warm-soft":"#3b3020",owe:"#f08a72",get:"#a3cf7c",sky:"linear-gradient(180deg,#3f5a2e 0%,#5b7a3e 60%,#8a8f52 100%)",dusk:"linear-gradient(100deg,#a3cf7c,#c9d98f,#e3b06a)","sky-ink":"#f4f8ee"}},
+ seaside:{name:"Seaside",
+  light:{bg:"#edf4f6",surface:"#fbfdfd",ink:"#17303a",muted:"#5d7480",line:"#d6e4e9",accent:"#127c8f","accent-ink":"#ffffff","accent-soft":"#d7eef2",warm:"#ea7f3e","warm-soft":"#fde8da",owe:"#c9483b",get:"#127c8f",sky:"linear-gradient(180deg,#7cc4d3 0%,#abd9e2 50%,#f6e3c5 100%)",dusk:"linear-gradient(100deg,#127c8f,#4fb0c0,#f0a46a)","sky-ink":"#0f2f39"},
+  dark:{bg:"#0f1b21",surface:"#16262e",ink:"#e8f3f6",muted:"#93aab4",line:"#24404b",accent:"#5cc7d8","accent-ink":"#062028","accent-soft":"#163b45",warm:"#f7a46f","warm-soft":"#3d2a1f",owe:"#ff8a7a",get:"#5cc7d8",sky:"linear-gradient(180deg,#0e4a5a 0%,#17707f 60%,#3f8f95 100%)",dusk:"linear-gradient(100deg,#5cc7d8,#8fd9e3,#f7a46f)","sky-ink":"#eefbfd"}},
+ lavender:{name:"Lavender",
+  light:{bg:"#f3f1f9",surface:"#fdfcff",ink:"#2a2440",muted:"#6f6888",line:"#e2ddf0",accent:"#6e55c4","accent-ink":"#ffffff","accent-soft":"#e9e3fa",warm:"#d9688f","warm-soft":"#fbe3ec",owe:"#c4416a",get:"#3f9a83",sky:"linear-gradient(180deg,#c3b4ee 0%,#dacff4 50%,#f7d9e5 100%)",dusk:"linear-gradient(100deg,#6e55c4,#a68be0,#e892b3)","sky-ink":"#2b2050"},
+  dark:{bg:"#17141f",surface:"#211c2c",ink:"#f1eefa",muted:"#aaa2c2",line:"#352e47",accent:"#a993f0","accent-ink":"#1a1233","accent-soft":"#312750",warm:"#f19ab8","warm-soft":"#44263a",owe:"#ff8fb0",get:"#7fd6bf",sky:"linear-gradient(180deg,#3d2f73 0%,#5a4597 60%,#8a5c99 100%)",dusk:"linear-gradient(100deg,#a993f0,#c9a4ec,#f19ab8)","sky-ink":"#f6f2ff"}},
+ charcoal:{name:"Charcoal",
+  light:{bg:"#f3f3f1",surface:"#ffffff",ink:"#1d1f22",muted:"#676a70",line:"#e1e1dd",accent:"#24282e","accent-ink":"#ffffff","accent-soft":"#e7e8ea",warm:"#e2694a","warm-soft":"#fbe3db",owe:"#c9452f",get:"#2f8a5f",sky:"linear-gradient(180deg,#2b2f36 0%,#3c424b 60%,#585f69 100%)",dusk:"linear-gradient(100deg,#24282e,#5a606a,#e2694a)","sky-ink":"#fafaf8"},
+  dark:{bg:"#121315",surface:"#1b1d20",ink:"#f2f2f0",muted:"#a0a3a8",line:"#2d3035",accent:"#f2f2f0","accent-ink":"#121315","accent-soft":"#2b2e33",warm:"#f08a6d","warm-soft":"#3e2620",owe:"#ff8c75",get:"#6fd0a0",sky:"linear-gradient(180deg,#2a2d33 0%,#3a3e45 60%,#4d525a 100%)",dusk:"linear-gradient(100deg,#f2f2f0,#b8bbc0,#f08a6d)","sky-ink":"#fafaf8"}}
+};
+window.joiePalette=function(){try{var k=localStorage.getItem("joie-palette");return window.JOIE_PALETTES[k]?k:"lemonade"}catch(e){return"lemonade"}};
+window.applyJoiePalette=function(key){
+  var P=window.JOIE_PALETTES[key]||window.JOIE_PALETTES.lemonade;
+  var dark=window.matchMedia&&window.matchMedia("(prefers-color-scheme: dark)").matches;
+  var t=P[dark?"dark":"light"],r=document.documentElement.style;
+  for(var k in t)r.setProperty("--"+k,t[k]);
+  r.setProperty("color-scheme",dark?"dark":"light");
+  var m=document.querySelector('meta[name="theme-color"]');if(m)m.setAttribute("content",t.bg);
+};
+window.applyJoiePalette(window.joiePalette());
+if(window.matchMedia)window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change",function(){window.applyJoiePalette(window.joiePalette())});
+</script>
 </head>
 <body>
 
 <div class="wrap" id="welcome" hidden>
   <div class="welcome">
     <div class="hero-sky">
-      <span class="eyebrow" style="color:#fffaf3">Trip expenses, split fairly</span>
+      <span class="eyebrow" style="color:inherit">Trip expenses, split fairly</span>
       <h1>Joie</h1>
       <p>Log who paid, scan receipts, and see who owes whom. Friends join with a 6-letter code. No sign-up.</p>
     </div>
@@ -352,6 +391,15 @@ header .status b{color:#a5432a}
 </div>
 
 <div class="dock" id="dockWrap" hidden><button class="btn" id="addBtn">+ Add expense</button></div>
+
+<div class="sheet" id="whoSheet" hidden>
+  <div class="panel">
+    <h2>Which one is you?</h2>
+    <p class="hint">Joie uses this to put your name on what you pay and to show your own total first. Only this phone remembers it.</p>
+    <div class="chips" id="whoList"></div>
+    <div class="member"><input id="whoNew" placeholder="Not on the list? Type your name"><button class="btn" type="button" id="whoAdd" style="padding:10px 14px">Add me</button></div>
+  </div>
+</div>
 
 <div class="sheet" id="sheet" hidden>
   <form class="panel" id="form" novalidate>
@@ -422,6 +470,9 @@ const uid=()=>Math.random().toString(36).slice(2,10);
 const wOf=(e,id)=>Number((e.weights||{})[id])>1?Number(e.weights[id]):1;
 function sharesOf(e){const ids=(e.split||[]).filter(id=>settings.members.some(m=>m.id===id));const tot=ids.reduce((a,id)=>a+wOf(e,id),0);const t=toTHB(e);const o={};ids.forEach(id=>o[id]=tot?t*wOf(e,id)/tot:0);return o}
 const isPersonal=e=>e.kind==="personal"||((e.split||[]).length===1&&e.split[0]===e.paidBy);
+const getMe=()=>{try{return localStorage.getItem("joie-me-"+tripId)}catch(e){return null}};
+const setMe=id=>{try{localStorage.setItem("joie-me-"+tripId,id)}catch(e){};try{localStorage.setItem("joie-dash-"+tripId,id)}catch(e){}};
+const meId=()=>{const m=getMe();return settings.members.some(x=>x.id===m)?m:null};
 const nameOf=id=>(settings.members.find(m=>m.id===id)||{}).name||"(removed)";
 const av=id=>avatars[id]?`<img class="av" src="${esc(avatars[id])}" alt="">`:`<span class="av" aria-hidden="true">${esc((nameOf(id).trim()[0]||"?").toUpperCase())}</span>`;
 function shrink(file){return new Promise((res,rej)=>{const url=URL.createObjectURL(file);const im=new Image();im.onload=()=>{const s=Math.min(im.width,im.height),c=document.createElement("canvas");c.width=c.height=160;c.getContext("2d").drawImage(im,(im.width-s)/2,(im.height-s)/2,s,s,0,0,160,160);URL.revokeObjectURL(url);res(c.toDataURL("image/jpeg",0.82))};im.onerror=()=>{URL.revokeObjectURL(url);rej(new Error("image"))};im.src=url})}
@@ -474,7 +525,7 @@ function showWelcome(msg){
 function closeTrip(){unsubs.forEach(u=>u());unsubs=[];tripId=null}
 function openTrip(id){
   closeTrip();
-  tripId=id;mode="connecting";settings=structuredClone(DEFAULT_SETTINGS);expenses=[];payments=[];avatars={};
+  tripId=id;dashWho=null;mode="connecting";settings=structuredClone(DEFAULT_SETTINGS);expenses=[];payments=[];avatars={};
   try{localStorage.setItem("joie-current",id)}catch(e){}
   $("welcome").hidden=true;$("app").hidden=false;$("dockWrap").hidden=false;
   const ref=myTrips().find(x=>x.id===id);$("tripName").textContent=ref?.name||"Loading…";
@@ -487,17 +538,28 @@ function openTrip(id){
     mode="shared";rememberTrip(id,tripTitle,tripCode);
     $("tripName").textContent=tripTitle;document.title=tripTitle+" · Joie";
     setStatus();render();
+    if(!meId()&&settings.members.length)askWho();else if(!settings.members.length)askWho();
   },e=>{console.warn(e);if(e.code==="permission-denied")lost()}));
   unsubs.push(onSnapshot(C("expenses"),q=>{expenses=q.docs.map(d=>({id:d.id,...d.data()}));render()},e=>console.warn(e)));
   unsubs.push(onSnapshot(C("payments"),q=>{payments=q.docs.map(d=>({id:d.id,...d.data()}));render()},e=>console.warn(e)));
   unsubs.push(onSnapshot(C("avatars"),q=>{avatars={};q.docs.forEach(d=>{const img=d.data().img;if(typeof img==="string"&&img.startsWith("data:image/"))avatars[d.id]=img});render()},e=>console.warn(e)));
 }
+function askWho(){
+  const sh=$("whoSheet");
+  $("whoList").innerHTML=settings.members.map(m=>`<button type="button" class="chip" data-me="${m.id}" style="display:inline-flex;align-items:center;gap:6px">${av(m.id)}${esc(m.name)}</button>`).join("");
+  $("whoList").querySelectorAll("[data-me]").forEach(b=>b.onclick=()=>{setMe(b.dataset.me);dashWho=b.dataset.me;sh.hidden=true;render()});
+  sh.hidden=false;
+}
+$("whoAdd").onclick=async()=>{const n=$("whoNew").value.trim();if(!n)return;const id=uid();const s=structuredClone(settings);s.members.push({id,name:n});setMe(id);dashWho=id;$("whoNew").value="";$("whoSheet").hidden=true;await api.saveSettings(s)};
+$("whoNew").onkeydown=e=>{if(e.key==="Enter"){e.preventDefault();$("whoAdd").click()}};
 async function createTrip(name,names){
   const u=await signedIn();
   let code=newCode();
   for(let i=0;i<5;i++){const s=await getDoc(doc(fdb,"codes",code));if(!s.exists())break;code=newCode()}
   const ref=doc(collection(fdb,"trips"));
-  await setDoc(ref,{name,code,ownerUid:u.uid,members:names.map(n=>({id:uid(),name:n})),rates:{HKD:4.2,CNY:4.6},createdAt:serverTimestamp()});
+  const members=names.map(n=>({id:uid(),name:n}));
+  if(members[0]){try{localStorage.setItem("joie-me-"+ref.id,members[0].id);localStorage.setItem("joie-dash-"+ref.id,members[0].id)}catch(e){}}
+  await setDoc(ref,{name,code,ownerUid:u.uid,members,rates:{HKD:4.2,CNY:4.6},createdAt:serverTimestamp()});
   await setDoc(doc(fdb,"trips",ref.id,"joiners",u.uid),{code,joinedAt:serverTimestamp()});
   await setDoc(doc(fdb,"codes",code),{tripId:ref.id});
   rememberTrip(ref.id,name,code);openTrip(ref.id);
@@ -541,16 +603,17 @@ function settle(b){
 }
 
 /* ---------- render ---------- */
-let dashWho=null;try{dashWho=localStorage.getItem("trip-dash-who")}catch(e){}
+let dashWho=null;
 function renderMini(){
   const el=$("mini");
   if(mode!=="shared"||!settings.members.length){el.innerHTML="";el.hidden=true;return}
   el.hidden=false;
   if(!$("dashWho")){el.innerHTML=`<label class="dash-pick">Show expenses for<select id="dashWho"></select></label><div id="dashBox"></div>`;
-    $("dashWho").onchange=()=>{dashWho=$("dashWho").value;try{localStorage.setItem("trip-dash-who",dashWho)}catch(e){}renderMini()}}
-  const sel=$("dashWho");const key=settings.members.map(m=>m.id+":"+m.name).join("|");
-  if(sel.dataset.key!==key){sel.innerHTML=`<option value="__all">Whole trip (everyone)</option>`+settings.members.map(m=>`<option value="${m.id}">${esc(m.name)}</option>`).join("");sel.dataset.key=key}
-  if(dashWho!=="__all"&&!settings.members.some(m=>m.id===dashWho))dashWho=settings.members[0].id;
+    $("dashWho").onchange=()=>{dashWho=$("dashWho").value;try{localStorage.setItem("joie-dash-"+tripId,dashWho)}catch(e){}renderMini()}}
+  if(dashWho===null){try{dashWho=localStorage.getItem("joie-dash-"+tripId)}catch(e){}if(!dashWho)dashWho=meId()}
+  const sel=$("dashWho");const key=settings.members.map(m=>m.id+":"+m.name).join("|")+"|"+meId();
+  if(sel.dataset.key!==key){sel.innerHTML=`<option value="__all">Whole trip (everyone)</option>`+settings.members.map(m=>`<option value="${m.id}">${esc(m.name)}${m.id===meId()?" (you)":""}</option>`).join("");sel.dataset.key=key}
+  if(dashWho!=="__all"&&!settings.members.some(m=>m.id===dashWho))dashWho=meId()||settings.members[0].id;
   if(sel.value!==dashWho)sel.value=dashWho;
   const id=dashWho;let shared=0,pers=0;const items=[];
   if(id==="__all"){
@@ -695,18 +758,21 @@ function renderSetup(){
   const el=$("setup");
   if(el.contains(document.activeElement))return; // don't clobber typing
   const r=settings.rates;
-  el.innerHTML=`<div class="codebox"><span class="eyebrow" style="color:#fffaf3">Trip code</span><span class="code">${esc(tripCode)}</span><span style="font-size:13px;opacity:.92">Friends open Joie, tap Join a trip and type this code.</span><div class="row2"><button class="btn" type="button" id="shareCode">Share</button><button class="btn" type="button" id="copyCode">Copy code</button></div></div>
+  el.innerHTML=`<div class="codebox"><span class="eyebrow" style="color:inherit">Trip code</span><span class="code">${esc(tripCode)}</span><span style="font-size:13px;opacity:.92">Friends open Joie, tap Join a trip and type this code.</span><div class="row2"><button class="btn" type="button" id="shareCode">Share</button><button class="btn" type="button" id="copyCode">Copy code</button></div></div>
   <div class="card">
-    <h2 style="margin:0">Travellers</h2><p class="hint">Names show in “Paid by” and the split. ${canWrite?"Tap a circle to add a photo.":""}</p>
+    <h2 style="margin:0">Travellers</h2><p class="hint">${meId()?`You are <b>${esc(nameOf(meId()))}</b> on this phone. <button type="button" class="link" id="changeMe">Change</button>`:`<button type="button" class="link" id="changeMe">Choose which name is you</button>`} · Tap a circle to add a photo.</p>
     <div id="memberList" style="display:flex;flex-direction:column;gap:8px">${settings.members.map(m=>`<div class="member">${canWrite?`<label class="avpick" aria-label="Photo for ${esc(m.name)}">${av(m.id)}<input type="file" accept="image/*" class="vh" id="p-${m.id}" data-photo="${m.id}"></label>`:av(m.id)}<input id="m-${m.id}" value="${esc(m.name)}" data-mid="${m.id}" ${canWrite?"":"disabled"}>${canWrite?`<button class="link danger" data-rm="${m.id}">Remove</button>`:""}</div>`).join("")}</div>
     ${canWrite?`<div class="member"><input id="newMember" placeholder="Add a name"><button class="btn" id="addMember" style="padding:10px 14px">Add</button></div>`:""}
   </div>
 </div>
+  <div class="card"><h2 style="margin:0">Colors</h2><p class="hint">Pick a look for Joie on this phone.</p><div class="swatches" id="swatches">${Object.entries(window.JOIE_PALETTES).map(([k,p])=>`<button type="button" class="swatch" data-pal="${k}" aria-pressed="${k===window.joiePalette()}"><i style="background:${p.light.sky}"><b style="background:${p.light.accent}"></b></i>${esc(p.name)}</button>`).join("")}</div></div>
   <div class="card"><button class="btn ghost" type="button" id="leaveTrip">Remove this trip from my phone</button><p class="hint">The trip stays for everyone else. You can join again with the code.</p></div>`;
   const shareText=`Join our trip “${tripTitle}” on Joie: ${location.origin+location.pathname}\nTrip code: ${tripCode}`;
   $("shareCode").onclick=async()=>{try{if(navigator.share){await navigator.share({title:"Joie",text:shareText});return}}catch(e){if(e&&e.name==="AbortError")return}try{await navigator.clipboard.writeText(shareText);$("shareCode").textContent="Copied invite"}catch(e){}};
   $("copyCode").onclick=async()=>{try{await navigator.clipboard.writeText(tripCode);$("copyCode").textContent="Copied"}catch(e){}};
   $("leaveTrip").onclick=()=>{const b=$("leaveTrip");if(b.dataset.armed!=="1"){b.dataset.armed="1";b.textContent="Tap again to remove";return}const id=tripId;const u=auth.currentUser;if(u)deleteDoc(doc(fdb,"trips",id,"joiners",u.uid)).catch(()=>{});forgetTrip(id);showWelcome()};
+  $("changeMe").onclick=askWho;
+  el.querySelectorAll("[data-pal]").forEach(b=>b.onclick=()=>{try{localStorage.setItem("joie-palette",b.dataset.pal)}catch(e){}window.applyJoiePalette(b.dataset.pal);el.querySelectorAll("[data-pal]").forEach(x=>x.setAttribute("aria-pressed",x===b))});
   if(!canWrite)return;
   const addM=async()=>{const v=$("newMember").value.trim();if(!v)return;const s=structuredClone(settings);s.members.push({id:uid(),name:v});$("newMember").value="";await api.saveSettings(s).catch(err);$("newMember")?.focus()};
   $("addMember").onclick=addM;$("newMember").onkeydown=e=>{if(e.key==="Enter"){e.preventDefault();addM()}};
@@ -776,7 +842,7 @@ function openForm(id){
   $("f-payer").innerHTML=settings.members.map(m=>`<option value="${m.id}">${esc(m.name)}</option>`).join("");
   $("f-cat").innerHTML=Object.entries(CATS).map(([k,v])=>`<option value="${k}">${v}</option>`).join("");
   $("f-title").value=e?.title||"";$("f-amount").value=e?.amount??"";$("f-cur").value=e?.cur||"HKD";
-  $("f-payer").value=e?.paidBy||settings.members[0].id;$("f-cat").value=e?.cat||"food";
+  $("f-payer").value=e?.paidBy||meId()||settings.members[0].id;$("f-cat").value=e?.cat||"food";
   $("f-date").value=e?.date||new Date().toISOString().slice(0,10);
   split=new Set(e?.split||settings.members.map(m=>m.id));wts={...(e?.weights||{})};
   scanCtl=null;scanCtl=null;receiptData=null;receiptChanged=false;showThumb(null);rcStatus("");

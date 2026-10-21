@@ -1,6 +1,6 @@
 // Joie service worker: keeps the app shell available offline.
 // Trip data itself is cached by Firestore, not here.
-const CACHE = "joie-v1";
+const CACHE = "joie-v2";
 const SHELL = ["./", "index.html", "config.js", "manifest.webmanifest", "icon-192.png", "apple-touch-icon.png"];
 
 self.addEventListener("install", e => {
